@@ -106,6 +106,15 @@ export interface BattleStatsInput {
 
 export type BearTrapSecondaryStats = Record<TroopType, BattleStatsInput>;
 
+// Bear Trap Profiles
+export interface BearTrapProfile {
+  id: string;
+  name: string;
+  config: BearTrapConfig;
+  secondaryStats: BearTrapSecondaryStats;
+  savedAt: number; // Date.now()
+}
+
 // Calculation Results
 export interface FormationRecommendation {
   id: string;

@@ -4,11 +4,13 @@ import { Card } from "@/app/_shared/components/Card";
 import { useLocalStorage } from "@/app/_shared/hooks/useLocalStorage";
 import type {
   BearTrapConfig,
+  BearTrapProfile,
   BearTrapSecondaryStats,
   CalculationResult,
 } from "@/app/_shared/types";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import BattleStatsInput from "./_components/BattleStatsInput";
+import ProfileManager, { MAX_PROFILES } from "./_components/ProfileManager";
 import RallySettings from "./_components/RallySettings";
 import ResultsDisplay from "./_components/ResultsDisplay";
 import TroopsInput from "./_components/TroopsInput";
@@ -20,30 +22,211 @@ const defaultSecondaryStats: BearTrapSecondaryStats = {
   cavalry: { attack: 374.4, defense: 388.4, lethality: 276.9, health: 240.2 },
 };
 
+const DEFAULT_CONFIG: BearTrapConfig = {
+  inventory: {
+    items: [],
+    trueGold: { infantry: 0, archer: 0, cavalry: 0 },
+  },
+  marchCapacity: 125000,
+  joinerLimit: 65000,
+  marchCount: 6,
+  trapEnhancementLevel: 5,
+  playerType: "average",
+  ownRallyCount: 5,
+  joinedRallyCount: 50,
+};
+
+function makeProfile(
+  name: string,
+  config: BearTrapConfig,
+  secondaryStats: BearTrapSecondaryStats,
+): BearTrapProfile {
+  return {
+    id: crypto.randomUUID(),
+    name,
+    config,
+    secondaryStats,
+    savedAt: Date.now(),
+  };
+}
+
 export default function BearTrapPage() {
-  const [config, setConfig] = useLocalStorage<BearTrapConfig>(
-    "beartrap:config",
-    {
-      inventory: {
-        items: [],
-        trueGold: { infantry: 0, archer: 0, cavalry: 0 },
-      },
-      marchCapacity: 125000,
-      joinerLimit: 65000,
-      marchCount: 6,
-      trapEnhancementLevel: 5,
-      playerType: "average",
-      ownRallyCount: 5,
-      joinedRallyCount: 50,
-    },
+  // ── Profiles ────────────────────────────────────────────────────────────
+  const [profiles, setProfiles] = useLocalStorage<BearTrapProfile[]>(
+    "beartrap:profiles",
+    [],
+  );
+  const [activeProfileId, setActiveProfileId] = useLocalStorage<string | null>(
+    "beartrap:activeProfileId",
+    null,
   );
 
-  const [secondaryStats, setSecondaryStats] =
-    useLocalStorage<BearTrapSecondaryStats>(
-      "beartrap:secondaryStats",
-      defaultSecondaryStats,
-    );
+  // ── Draft (auto-persisted so unsaved changes survive a page refresh) ────
+  // Stores the in-progress edits together with the profile they belong to.
+  // Cleared on Save or when switching away to another profile.
+  const [draft, setDraft] = useLocalStorage<{
+    profileId: string;
+    config: BearTrapConfig;
+    secondaryStats: BearTrapSecondaryStats;
+  } | null>("beartrap:draft", null);
 
+  const [config, setConfigRaw] = useState<BearTrapConfig>(DEFAULT_CONFIG);
+  const [secondaryStats, setSecondaryStatsRaw] =
+    useState<BearTrapSecondaryStats>(defaultSecondaryStats);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Wrapped setters that also write to the draft immediately
+  const setConfig = useCallback(
+    (value: BearTrapConfig | ((prev: BearTrapConfig) => BearTrapConfig)) => {
+      setConfigRaw((prev) => {
+        const next = typeof value === "function" ? value(prev) : value;
+        setDraft((d) => ({
+          profileId: d?.profileId ?? activeProfileId ?? "",
+          config: next,
+          secondaryStats: d?.secondaryStats ?? defaultSecondaryStats,
+        }));
+        setHasUnsavedChanges(true);
+        return next;
+      });
+    },
+    [activeProfileId, setDraft],
+  );
+
+  const setSecondaryStats = useCallback(
+    (
+      value:
+        | BearTrapSecondaryStats
+        | ((prev: BearTrapSecondaryStats) => BearTrapSecondaryStats),
+    ) => {
+      setSecondaryStatsRaw((prev) => {
+        const next = typeof value === "function" ? value(prev) : value;
+        setDraft((d) => ({
+          profileId: d?.profileId ?? activeProfileId ?? "",
+          config: d?.config ?? DEFAULT_CONFIG,
+          secondaryStats: next,
+        }));
+        setHasUnsavedChanges(true);
+        return next;
+      });
+    },
+    [activeProfileId, setDraft],
+  );
+
+  // ── Hydrate from active profile (or draft) on mount ─────────────────────
+  const hydratedRef = useRef(false);
+  useEffect(() => {
+    if (hydratedRef.current) return;
+    hydratedRef.current = true;
+
+    if (profiles.length === 0) {
+      // First launch — create a default profile and treat it as active
+      const first = makeProfile(
+        "Profile 1",
+        DEFAULT_CONFIG,
+        defaultSecondaryStats,
+      );
+      setProfiles([first]);
+      setActiveProfileId(first.id);
+      setConfigRaw(first.config);
+      setSecondaryStatsRaw(first.secondaryStats);
+      return;
+    }
+
+    const active =
+      profiles.find((p) => p.id === activeProfileId) ?? profiles[0];
+    setActiveProfileId(active.id);
+
+    // Restore draft if it belongs to the active profile
+    if (draft && draft.profileId === active.id) {
+      setConfigRaw(draft.config);
+      setSecondaryStatsRaw(draft.secondaryStats);
+      setHasUnsavedChanges(true);
+    } else {
+      setConfigRaw(active.config);
+      setSecondaryStatsRaw(active.secondaryStats);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Profile actions ──────────────────────────────────────────────────────
+  const handleSave = useCallback(() => {
+    setProfiles((prev) =>
+      prev.map((p) =>
+        p.id === activeProfileId
+          ? { ...p, config, secondaryStats, savedAt: Date.now() }
+          : p,
+      ),
+    );
+    setDraft(null);
+    setHasUnsavedChanges(false);
+  }, [activeProfileId, config, secondaryStats, setDraft, setProfiles]);
+
+  const handleSwitch = useCallback(
+    (id: string) => {
+      if (id === activeProfileId) return;
+      const target = profiles.find((p) => p.id === id);
+      if (!target) return;
+      setActiveProfileId(id);
+      setConfigRaw(target.config);
+      setSecondaryStatsRaw(target.secondaryStats);
+      setDraft(null);
+      setHasUnsavedChanges(false);
+    },
+    [activeProfileId, profiles, setActiveProfileId, setDraft],
+  );
+
+  const handleNew = useCallback(() => {
+    if (profiles.length >= MAX_PROFILES) return;
+    const name = `Profile ${profiles.length + 1}`;
+    const fresh = makeProfile(name, DEFAULT_CONFIG, defaultSecondaryStats);
+    setProfiles((prev) => [...prev, fresh]);
+    setActiveProfileId(fresh.id);
+    setConfigRaw(fresh.config);
+    setSecondaryStatsRaw(fresh.secondaryStats);
+    setDraft(null);
+    setHasUnsavedChanges(false);
+  }, [profiles, setProfiles, setActiveProfileId, setDraft]);
+
+  const handleRename = useCallback(
+    (id: string, name: string) => {
+      setProfiles((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, name } : p)),
+      );
+    },
+    [setProfiles],
+  );
+
+  const handleDelete = useCallback(
+    (id: string) => {
+      const remaining = profiles.filter((p) => p.id !== id);
+      if (remaining.length === 0) {
+        // Should not happen (delete disabled at 1 profile), but guard anyway
+        const fresh = makeProfile(
+          "Profile 1",
+          DEFAULT_CONFIG,
+          defaultSecondaryStats,
+        );
+        setProfiles([fresh]);
+        setActiveProfileId(fresh.id);
+        setConfigRaw(fresh.config);
+        setSecondaryStatsRaw(fresh.secondaryStats);
+        setDraft(null);
+        return;
+      }
+      setProfiles(remaining);
+      if (id === activeProfileId) {
+        const next = remaining[0];
+        setActiveProfileId(next.id);
+        setConfigRaw(next.config);
+        setSecondaryStatsRaw(next.secondaryStats);
+        setDraft(null);
+        setHasUnsavedChanges(false);
+      }
+    },
+    [activeProfileId, profiles, setActiveProfileId, setDraft, setProfiles],
+  );
+
+  // ── Calculation ──────────────────────────────────────────────────────────
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
@@ -81,6 +264,18 @@ export default function BearTrapPage() {
             Optimize your bear trap event formation for maximum damage output
           </p>
         </div>
+
+        {/* Profile Manager */}
+        <ProfileManager
+          profiles={profiles}
+          activeProfileId={activeProfileId}
+          hasUnsavedChanges={hasUnsavedChanges}
+          onSwitch={handleSwitch}
+          onSave={handleSave}
+          onNew={handleNew}
+          onRename={handleRename}
+          onDelete={handleDelete}
+        />
 
         {/* Input Area */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
