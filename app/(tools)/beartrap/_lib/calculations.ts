@@ -29,20 +29,24 @@ function buildTroopsDebugInfo(
   const usedTroops: Record<string, number> = {};
   const unusedTroops: Record<string, number> = {};
 
+  // First, group inventory by type+tier (handles any legacy duplicates in stored data)
+  const grouped: Record<string, { type: string; tier: number; count: number }> = {};
   items.forEach((item) => {
-    const tierLabel = `${item.type}_T${item.tier}`;
-    let used = 0;
-
-    if (item.type === "infantry" && infantryTierBreakdown[item.tier]) {
-      used = infantryTierBreakdown[item.tier];
-    } else if (item.type === "cavalry" && cavalryTierBreakdown[item.tier]) {
-      used = cavalryTierBreakdown[item.tier];
-    } else if (item.type === "archer" && archerTierBreakdown[item.tier]) {
-      used = archerTierBreakdown[item.tier];
+    const key = `${item.type}_T${item.tier}`;
+    if (grouped[key]) {
+      grouped[key].count += item.count;
+    } else {
+      grouped[key] = { type: item.type, tier: item.tier, count: item.count };
     }
+  });
 
-    const unused = Math.max(0, item.count - used);
+  Object.entries(grouped).forEach(([tierLabel, { type, tier, count }]) => {
+    let used = 0;
+    if (type === "infantry") used = infantryTierBreakdown[tier] ?? 0;
+    else if (type === "cavalry") used = cavalryTierBreakdown[tier] ?? 0;
+    else if (type === "archer") used = archerTierBreakdown[tier] ?? 0;
 
+    const unused = Math.max(0, count - used);
     if (used > 0) usedTroops[tierLabel] = used;
     if (unused > 0) unusedTroops[tierLabel] = unused;
   });

@@ -33,15 +33,13 @@ export function useLocalStorage<T>(
     }
   }, [key, storedValue]);
 
-  const setValue = useCallback(
-    (value: T | ((prev: T) => T)) => {
-      setStoredValue((prev) => {
-        const next = typeof value === "function" ? (value as (p: T) => T)(prev) : value;
-        return next;
-      });
-    },
-    [],
-  );
+  const setValue = useCallback((value: T | ((prev: T) => T)) => {
+    setStoredValue((prev) => {
+      const next =
+        typeof value === "function" ? (value as (p: T) => T)(prev) : value;
+      return next;
+    });
+  }, []);
 
   return [storedValue, setValue];
 }

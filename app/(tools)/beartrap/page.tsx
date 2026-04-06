@@ -1,13 +1,13 @@
 "use client";
 
 import { Card } from "@/app/_shared/components/Card";
+import { useLocalStorage } from "@/app/_shared/hooks/useLocalStorage";
 import type {
   BearTrapConfig,
   BearTrapSecondaryStats,
   CalculationResult,
 } from "@/app/_shared/types";
 import { useState } from "react";
-import { useLocalStorage } from "@/app/_shared/hooks/useLocalStorage";
 import BattleStatsInput from "./_components/BattleStatsInput";
 import RallySettings from "./_components/RallySettings";
 import ResultsDisplay from "./_components/ResultsDisplay";
@@ -21,24 +21,28 @@ const defaultSecondaryStats: BearTrapSecondaryStats = {
 };
 
 export default function BearTrapPage() {
-  const [config, setConfig] = useLocalStorage<BearTrapConfig>("beartrap:config", {
-    inventory: {
-      items: [],
-      trueGold: { infantry: 0, archer: 0, cavalry: 0 },
+  const [config, setConfig] = useLocalStorage<BearTrapConfig>(
+    "beartrap:config",
+    {
+      inventory: {
+        items: [],
+        trueGold: { infantry: 0, archer: 0, cavalry: 0 },
+      },
+      marchCapacity: 125000,
+      joinerLimit: 65000,
+      marchCount: 6,
+      trapEnhancementLevel: 5,
+      playerType: "average",
+      ownRallyCount: 5,
+      joinedRallyCount: 50,
     },
-    marchCapacity: 125000,
-    joinerLimit: 65000,
-    marchCount: 6,
-    trapEnhancementLevel: 5,
-    playerType: "average",
-    ownRallyCount: 5,
-    joinedRallyCount: 50,
-  });
-
-  const [secondaryStats, setSecondaryStats] = useLocalStorage<BearTrapSecondaryStats>(
-    "beartrap:secondaryStats",
-    defaultSecondaryStats,
   );
+
+  const [secondaryStats, setSecondaryStats] =
+    useLocalStorage<BearTrapSecondaryStats>(
+      "beartrap:secondaryStats",
+      defaultSecondaryStats,
+    );
 
   const [result, setResult] = useState<CalculationResult | null>(null);
 

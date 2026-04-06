@@ -30,20 +30,33 @@ export default function TroopsInput({
   const handleAddTroop = () => {
     if (selectedAmount <= 0) return;
 
-    const newItem: TroopInventoryItem = {
-      id: `${selectedType}-t${selectedTier}-${Date.now()}`,
-      type: selectedType,
-      tier: selectedTier,
-      count: selectedAmount,
-    };
+    const existingIndex = config.inventory.items.findIndex(
+      (item) => item.type === selectedType && item.tier === selectedTier,
+    );
 
-    const updatedItems = [...config.inventory.items, newItem];
+    let updatedItems: TroopInventoryItem[];
+    if (existingIndex !== -1) {
+      // Merge into existing row instead of creating a duplicate
+      updatedItems = config.inventory.items.map((item, i) =>
+        i === existingIndex
+          ? { ...item, count: item.count + selectedAmount }
+          : item,
+      );
+    } else {
+      updatedItems = [
+        ...config.inventory.items,
+        {
+          id: `${selectedType}-t${selectedTier}-${Date.now()}`,
+          type: selectedType,
+          tier: selectedTier,
+          count: selectedAmount,
+        },
+      ];
+    }
+
     onConfigChange({
       ...config,
-      inventory: {
-        ...config.inventory,
-        items: updatedItems,
-      },
+      inventory: { ...config.inventory, items: updatedItems },
     });
 
     setSelectedAmount(0);
