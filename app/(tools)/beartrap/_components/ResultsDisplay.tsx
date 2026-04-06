@@ -12,22 +12,37 @@ interface ResultsDisplayProps {
 const TROOP_TYPES = ["infantry", "cavalry", "archer"] as const;
 
 const TROOP_META = {
-  infantry: { icon: "⚔️", label: "Inf",      color: "blue"   as const },
-  cavalry:  { icon: "🐴", label: "Cav",      color: "green"  as const },
-  archer:   { icon: "🏹", label: "Arc",      color: "orange" as const },
+  infantry: { icon: "⚔️", label: "Inf", color: "blue" as const },
+  cavalry: { icon: "🐴", label: "Cav", color: "green" as const },
+  archer: { icon: "🏹", label: "Arc", color: "orange" as const },
 } as const;
 
 const COLOR = {
-  blue:   { bg: "bg-blue-500/10",   border: "border-blue-500/25",   text: "text-blue-400",   bar: "bg-blue-500"   },
-  green:  { bg: "bg-green-500/10",  border: "border-green-500/25",  text: "text-green-400",  bar: "bg-green-500"  },
-  orange: { bg: "bg-orange-500/10", border: "border-orange-500/25", text: "text-orange-400", bar: "bg-orange-500" },
+  blue: {
+    bg: "bg-blue-500/10",
+    border: "border-blue-500/25",
+    text: "text-blue-400",
+    bar: "bg-blue-500",
+  },
+  green: {
+    bg: "bg-green-500/10",
+    border: "border-green-500/25",
+    text: "text-green-400",
+    bar: "bg-green-500",
+  },
+  orange: {
+    bg: "bg-orange-500/10",
+    border: "border-orange-500/25",
+    text: "text-orange-400",
+    bar: "bg-orange-500",
+  },
 } as const;
 
 /** 1 234 567  →  1.23M  |  987 654  →  987.6K  |  < 1 000  →  raw */
 function fmtDmg(n: number): string {
   const v = Math.floor(n);
   if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(2)}M`;
-  if (v >= 1_000)     return `${(v / 1_000).toFixed(1)}K`;
+  if (v >= 1_000) return `${(v / 1_000).toFixed(1)}K`;
   return v.toLocaleString();
 }
 
@@ -38,20 +53,37 @@ function fmtNum(n: number): string {
 // ─── sub-components ─────────────────────────────────────────────────────────
 
 /** Formation ratio bar: coloured segments proportional to each troop type */
-function FormationBar({ infantry, cavalry, archer }: { infantry: number; cavalry: number; archer: number }) {
+function FormationBar({
+  infantry,
+  cavalry,
+  archer,
+}: {
+  infantry: number;
+  cavalry: number;
+  archer: number;
+}) {
   const total = infantry + cavalry + archer;
   if (total === 0) return null;
   const pct = (n: number) => ((n / total) * 100).toFixed(1);
   return (
     <div className="w-full h-2 rounded-full overflow-hidden flex gap-px">
       {infantry > 0 && (
-        <div className="bg-blue-500 h-full rounded-l-full" style={{ width: `${pct(infantry)}%` }} />
+        <div
+          className="bg-blue-500 h-full rounded-l-full"
+          style={{ width: `${pct(infantry)}%` }}
+        />
       )}
       {cavalry > 0 && (
-        <div className="bg-green-500 h-full" style={{ width: `${pct(cavalry)}%` }} />
+        <div
+          className="bg-green-500 h-full"
+          style={{ width: `${pct(cavalry)}%` }}
+        />
       )}
       {archer > 0 && (
-        <div className="bg-orange-500 h-full rounded-r-full" style={{ width: `${pct(archer)}%` }} />
+        <div
+          className="bg-orange-500 h-full rounded-r-full"
+          style={{ width: `${pct(archer)}%` }}
+        />
       )}
     </div>
   );
@@ -63,7 +95,7 @@ function TroopColumn({
   count,
   tiers,
 }: {
-  type: typeof TROOP_TYPES[number];
+  type: (typeof TROOP_TYPES)[number];
   count: number;
   tiers?: Record<string, number>;
 }) {
@@ -74,21 +106,29 @@ function TroopColumn({
     : [];
 
   return (
-    <div className={`${bg} border ${border} rounded-lg p-3 flex flex-col gap-1`}>
+    <div
+      className={`${bg} border ${border} rounded-lg p-3 flex flex-col gap-1`}
+    >
       {/* Header */}
       <div className="flex items-center gap-1.5">
         <span className="text-sm leading-none">{icon}</span>
-        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{label}</span>
+        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+          {label}
+        </span>
       </div>
       {/* Total count */}
-      <p className={`text-xl font-bold ${text} tabular-nums`}>{fmtNum(count)}</p>
+      <p className={`text-lg font-bold ${text} tabular-nums`}>
+        {fmtNum(count)}
+      </p>
       {/* Tier breakdown */}
       {sortedTiers.length > 0 && (
         <div className="mt-1 space-y-0.5 border-t border-white/10 pt-1">
           {sortedTiers.map(([tier, cnt]) => (
             <div key={tier} className="flex justify-between text-[11px]">
               <span className="text-gray-500">T{tier}</span>
-              <span className="text-gray-300 tabular-nums font-medium">{fmtNum(cnt)}</span>
+              <span className="text-gray-300 tabular-nums font-medium">
+                {fmtNum(cnt)}
+              </span>
             </div>
           ))}
         </div>
@@ -98,7 +138,11 @@ function TroopColumn({
 }
 
 /** Damage by type row — compact 3-cell strip */
-function DamageByTypeRow({ damageByType }: { damageByType: Record<string, number> }) {
+function DamageByTypeRow({
+  damageByType,
+}: {
+  damageByType: Record<string, number>;
+}) {
   return (
     <div className="grid grid-cols-3 gap-2">
       {TROOP_TYPES.map((type) => {
@@ -106,8 +150,12 @@ function DamageByTypeRow({ damageByType }: { damageByType: Record<string, number
         const { text } = COLOR[color];
         return (
           <div key={type} className="text-center">
-            <p className="text-[10px] text-gray-500 mb-0.5">{icon} {label}</p>
-            <p className={`text-xs font-bold tabular-nums ${text}`}>{fmtDmg(damageByType[type] ?? 0)}</p>
+            <p className="text-[10px] text-gray-500 mb-0.5">
+              {icon} {label}
+            </p>
+            <p className={`text-xs font-bold tabular-nums ${text}`}>
+              {fmtDmg(damageByType[type] ?? 0)}
+            </p>
           </div>
         );
       })}
@@ -126,7 +174,8 @@ function MarchCard({
   showDamage?: boolean;
 }) {
   const total = march.totalTroops;
-  const pctOf = (n: number) => total > 0 ? `${((n / total) * 100).toFixed(0)}%` : "—";
+  const pctOf = (n: number) =>
+    total > 0 ? `${((n / total) * 100).toFixed(0)}%` : "—";
 
   return (
     <div className="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-white/20 transition-colors flex flex-col gap-3">
@@ -165,7 +214,11 @@ function MarchCard({
             key={type}
             type={type}
             count={march[type]}
-            tiers={march[`${type}Tiers` as keyof MarchFormation] as Record<string, number> | undefined}
+            tiers={
+              march[`${type}Tiers` as keyof MarchFormation] as
+                | Record<string, number>
+                | undefined
+            }
           />
         ))}
       </div>
@@ -179,7 +232,9 @@ function MarchCard({
               {fmtDmg(march.estimatedDamage)}
             </span>
           </div>
-          {march.damageByType && <DamageByTypeRow damageByType={march.damageByType} />}
+          {march.damageByType && (
+            <DamageByTypeRow damageByType={march.damageByType} />
+          )}
         </div>
       )}
     </div>
@@ -197,14 +252,32 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
       <Card title="Configuration">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
           {[
-            { label: "Player Type",    value: config.playerType,            cap: true },
-            { label: "March Capacity", value: fmtNum(config.marchCapacity), cap: false },
-            { label: "Joiner Limit",   value: fmtNum(config.joinerLimit),   cap: false },
-            { label: "Trap Level",     value: `Lv ${config.trapEnhancementLevel}`, cap: false },
+            { label: "Player Type", value: config.playerType, cap: true },
+            {
+              label: "March Capacity",
+              value: fmtNum(config.marchCapacity),
+              cap: false,
+            },
+            {
+              label: "Joiner Limit",
+              value: fmtNum(config.joinerLimit),
+              cap: false,
+            },
+            {
+              label: "Trap Level",
+              value: `Lv ${config.trapEnhancementLevel}`,
+              cap: false,
+            },
           ].map(({ label, value, cap }) => (
             <div key={label}>
-              <p className="text-xs text-gray-500 uppercase tracking-wide">{label}</p>
-              <p className={`text-base font-semibold text-white mt-0.5 ${cap ? "capitalize" : ""}`}>{value}</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wide">
+                {label}
+              </p>
+              <p
+                className={`text-base font-semibold text-white mt-0.5 ${cap ? "capitalize" : ""}`}
+              >
+                {value}
+              </p>
             </div>
           ))}
         </div>
@@ -240,14 +313,22 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {formation.debugInfo.ownRallyRatio && (
                 <div className="bg-white/5 rounded-lg p-3">
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Own Rally</p>
-                  <p className="text-sm font-semibold text-white font-mono">{formation.debugInfo.ownRallyRatio}</p>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                    Own Rally
+                  </p>
+                  <p className="text-sm font-semibold text-white font-mono">
+                    {formation.debugInfo.ownRallyRatio}
+                  </p>
                 </div>
               )}
               {formation.debugInfo.joinerRatio && (
                 <div className="bg-white/5 rounded-lg p-3">
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Joiner Marches</p>
-                  <p className="text-sm font-semibold text-white font-mono">{formation.debugInfo.joinerRatio}</p>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                    Joiner Marches
+                  </p>
+                  <p className="text-sm font-semibold text-white font-mono">
+                    {formation.debugInfo.joinerRatio}
+                  </p>
                 </div>
               )}
             </div>
@@ -261,7 +342,8 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
                   <div>
                     <p className="text-sm text-gray-400">Own Rally Damage</p>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      {fmtDmg(formation.ownRally.estimatedDamage)} × {config.ownRallyCount} rallies
+                      {fmtDmg(formation.ownRally.estimatedDamage)} ×{" "}
+                      {config.ownRallyCount} rallies
                     </p>
                   </div>
                   <p className="text-2xl font-bold text-blue-400 tabular-nums">
@@ -282,9 +364,14 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
               </div>
               {config.playerType !== "joiner" && (
                 <div className="flex items-center justify-between gap-4 bg-kingshot-gold-500/5 border border-kingshot-gold-500/20 rounded-lg px-4 py-3">
-                  <p className="text-sm font-semibold text-gray-200">Total Event Damage</p>
+                  <p className="text-sm font-semibold text-gray-200">
+                    Total Event Damage
+                  </p>
                   <p className="text-3xl font-bold text-kingshot-gold-400 tabular-nums">
-                    {fmtDmg((formation.ownRallyDamage ?? 0) + (formation.joinedRallyDamage ?? 0))}
+                    {fmtDmg(
+                      (formation.ownRallyDamage ?? 0) +
+                        (formation.joinedRallyDamage ?? 0),
+                    )}
                   </p>
                 </div>
               )}
@@ -308,18 +395,29 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
 
                 return (
                   <div key={section}>
-                    <h3 className={`text-xs font-semibold uppercase tracking-wide mb-2 ${isUsed ? "text-green-400" : "text-gray-500"}`}>
+                    <h3
+                      className={`text-xs font-semibold uppercase tracking-wide mb-2 ${isUsed ? "text-green-400" : "text-gray-500"}`}
+                    >
                       {isUsed ? "✓ Used Troops" : "◌ Unused Troops"}
                     </h3>
                     <div className="overflow-x-auto">
                       <table className="w-full text-xs">
                         <thead>
                           <tr className="border-b border-white/10">
-                            <th className="text-left py-1.5 pr-3 text-gray-500 font-medium">Type</th>
+                            <th className="text-left py-1.5 pr-3 text-gray-500 font-medium">
+                              Type
+                            </th>
                             {sortedTiers.map((tier) => (
-                              <th key={tier} className="text-right py-1.5 px-2 text-gray-500 font-medium">T{tier}</th>
+                              <th
+                                key={tier}
+                                className="text-right py-1.5 px-2 text-gray-500 font-medium"
+                              >
+                                T{tier}
+                              </th>
                             ))}
-                            <th className="text-right py-1.5 pl-3 text-gray-500 font-medium">Total</th>
+                            <th className="text-right py-1.5 pl-3 text-gray-500 font-medium">
+                              Total
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
@@ -332,16 +430,29 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
                                 .filter(([k]) => k === `${type}_T${tier}`)
                                 .reduce((s, [, v]) => s + v, 0);
                             });
-                            const total = Object.values(tierCounts).reduce((a, b) => a + b, 0);
+                            const total = Object.values(tierCounts).reduce(
+                              (a, b) => a + b,
+                              0,
+                            );
                             if (total === 0) return null;
                             return (
-                              <tr key={type} className="border-b border-white/5">
-                                <td className={`py-1.5 pr-3 font-semibold capitalize ${text}`}>
+                              <tr
+                                key={type}
+                                className="border-b border-white/5"
+                              >
+                                <td
+                                  className={`py-1.5 pr-3 font-semibold capitalize ${text}`}
+                                >
                                   {icon} {type}
                                 </td>
                                 {sortedTiers.map((tier) => (
-                                  <td key={tier} className="text-right py-1.5 px-2 text-gray-300 tabular-nums">
-                                    {tierCounts[tier] > 0 ? fmtNum(tierCounts[tier]) : "—"}
+                                  <td
+                                    key={tier}
+                                    className="text-right py-1.5 px-2 text-gray-300 tabular-nums"
+                                  >
+                                    {tierCounts[tier] > 0
+                                      ? fmtNum(tierCounts[tier])
+                                      : "—"}
                                   </td>
                                 ))}
                                 <td className="text-right py-1.5 pl-3 text-white font-bold tabular-nums">
@@ -363,4 +474,3 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
     </div>
   );
 }
-

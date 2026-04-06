@@ -1,6 +1,5 @@
 "use client";
 
-import { Input } from "@/app/_shared/components/Input";
 import type { BearTrapConfig } from "@/app/_shared/types";
 
 interface RallySettingsProps {
@@ -8,82 +7,80 @@ interface RallySettingsProps {
   onConfigChange: (config: BearTrapConfig) => void;
 }
 
-export default function RallySettings({
-  config,
-  onConfigChange,
-}: RallySettingsProps) {
-  const handleChange = (updates: Partial<BearTrapConfig>) => {
-    onConfigChange({ ...config, ...updates });
-  };
+interface FieldProps {
+  label: string;
+  hint?: string;
+  value: number;
+  min?: number;
+  max?: number;
+  onChange: (val: number) => void;
+}
+
+function Field({ label, hint, value, min, max, onChange }: FieldProps) {
+  return (
+    <div className="space-y-0.5">
+      <label className="block text-xs font-medium text-gray-400">{label}</label>
+      <input
+        type="number"
+        value={value}
+        min={min}
+        max={max}
+        onChange={(e) => onChange(parseInt(e.target.value) || min || 0)}
+        className="w-full rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-sm text-white tabular-nums outline-none transition-colors focus:border-kingshot-gold-500 focus:ring-1 focus:ring-kingshot-gold-500/20"
+      />
+      {hint && <p className="text-[11px] text-gray-600 leading-tight">{hint}</p>}
+    </div>
+  );
+}
+
+export default function RallySettings({ config, onConfigChange }: RallySettingsProps) {
+  const set = (updates: Partial<BearTrapConfig>) => onConfigChange({ ...config, ...updates });
 
   return (
-    <div className="space-y-4">
-      <Input
-        label="March Capacity"
-        type="number"
+    <div className="grid grid-cols-2 gap-x-3 gap-y-3">
+      <Field
+        label="Deploy Capacity"
+        hint="Own rally troop cap"
         value={config.marchCapacity}
-        onChange={(e) =>
-          handleChange({ marchCapacity: parseInt(e.target.value) || 0 })
-        }
         min={0}
-        helper="Maximum troops you can send in own rally"
+        onChange={(v) => set({ marchCapacity: v })}
       />
-
-      <Input
+      <Field
         label="Joiner Limit"
-        type="number"
+        hint="Per-march troop cap"
         value={config.joinerLimit}
-        onChange={(e) =>
-          handleChange({ joinerLimit: parseInt(e.target.value) || 0 })
-        }
         min={0}
-        helper="Alliance joiner limit (affects joining capacity)"
+        onChange={(v) => set({ joinerLimit: v })}
       />
-
-      <Input
+      <Field
         label="March Count"
-        type="number"
+        hint="Joiner formations"
         value={config.marchCount}
-        onChange={(e) =>
-          handleChange({ marchCount: parseInt(e.target.value) || 1 })
-        }
         min={1}
         max={20}
-        helper="Number of joiner formations (marches) to create"
+        onChange={(v) => set({ marchCount: v })}
       />
-
-      <Input
-        label="Trap Enhancement Level"
-        type="number"
+      <Field
+        label="Trap Level"
+        hint="+5% atk/lvl, max 25%"
         value={config.trapEnhancementLevel}
-        onChange={(e) =>
-          handleChange({ trapEnhancementLevel: parseInt(e.target.value) || 1 })
-        }
         min={1}
-        max={20}
-        helper="Trap upgrade level: +5% attack per level (max 25%)"
+        max={5}
+        onChange={(v) => set({ trapEnhancementLevel: v })}
       />
-
-      <Input
-        label="Own Rally Organized Count"
-        type="number"
+      <Field
+        label="Own Rallies Led"
+        hint="Times you led a rally"
         value={config.ownRallyCount}
-        onChange={(e) =>
-          handleChange({ ownRallyCount: parseInt(e.target.value) || 1 })
-        }
         min={1}
-        helper="Total times you organized/led your own rally (limited to 1 per player)"
+        onChange={(v) => set({ ownRallyCount: v })}
       />
-
-      <Input
-        label="Joined Rally Count"
-        type="number"
+      <Field
+        label="Rallies Joined"
+        hint="Times you joined"
         value={config.joinedRallyCount}
-        onChange={(e) =>
-          handleChange({ joinedRallyCount: parseInt(e.target.value) || 50 })
-        }
         min={0}
-        helper="Total times you joined other rallies (average 50, can be higher)"
+        onChange={(v) => set({ joinedRallyCount: v })}
       />
     </div>
   );

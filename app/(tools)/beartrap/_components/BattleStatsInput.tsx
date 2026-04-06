@@ -1,7 +1,5 @@
 "use client";
 
-import { Input } from "@/app/_shared/components/Input";
-import { TROOP_TYPES } from "@/app/_shared/data/troops";
 import type { BearTrapSecondaryStats, TroopType } from "@/app/_shared/types";
 
 interface BattleStatsInputProps {
@@ -9,86 +7,58 @@ interface BattleStatsInputProps {
   onStatsChange: (stats: BearTrapSecondaryStats) => void;
 }
 
-export default function BattleStatsInput({
-  stats,
-  onStatsChange,
-}: BattleStatsInputProps) {
-  const handleStatsChange = (
-    troopType: TroopType,
-    key: string,
-    value: number,
-  ) => {
-    onStatsChange({
-      ...stats,
-      [troopType]: {
-        ...stats[troopType],
-        [key]: value,
-      },
-    });
-  };
+const TROOP_META: { type: TroopType; icon: string; label: string; color: string }[] = [
+  { type: "infantry", icon: "⚔️", label: "Infantry", color: "text-blue-400"   },
+  { type: "cavalry",  icon: "🐴", label: "Cavalry",  color: "text-green-400"  },
+  { type: "archer",   icon: "🏹", label: "Archer",   color: "text-orange-400" },
+];
+
+const STAT_FIELDS: { key: keyof BearTrapSecondaryStats[TroopType]; label: string; step?: string }[] = [
+  { key: "attack",    label: "Atk"  },
+  { key: "defense",   label: "Def"  },
+  { key: "lethality", label: "Leth", step: "0.1" },
+  { key: "health",    label: "HP"   },
+];
+
+export default function BattleStatsInput({ stats, onStatsChange }: BattleStatsInputProps) {
+  const set = (type: TroopType, key: string, value: number) =>
+    onStatsChange({ ...stats, [type]: { ...stats[type], [key]: value } });
 
   return (
-    <div className="space-y-6">
-      {Object.entries(TROOP_TYPES).map(([key, label]) => (
-        <div key={key}>
-          <h4 className="text-sm font-semibold text-gray-200 mb-3">{label}</h4>
-          <div className="grid grid-cols-2 gap-2">
-            <Input
-              label="Attack"
-              type="number"
-              value={stats[key as TroopType].attack}
-              onChange={(e) =>
-                handleStatsChange(
-                  key as TroopType,
-                  "attack",
-                  parseFloat(e.target.value) || 0,
-                )
-              }
-              min={0}
-            />
-            <Input
-              label="Defense"
-              type="number"
-              value={stats[key as TroopType].defense}
-              onChange={(e) =>
-                handleStatsChange(
-                  key as TroopType,
-                  "defense",
-                  parseFloat(e.target.value) || 0,
-                )
-              }
-              min={0}
-            />
-            <Input
-              label="Lethality"
-              type="number"
-              value={stats[key as TroopType].lethality}
-              onChange={(e) =>
-                handleStatsChange(
-                  key as TroopType,
-                  "lethality",
-                  parseFloat(e.target.value) || 0,
-                )
-              }
-              min={0}
-              step="0.1"
-            />
-            <Input
-              label="Health"
-              type="number"
-              value={stats[key as TroopType].health}
-              onChange={(e) =>
-                handleStatsChange(
-                  key as TroopType,
-                  "health",
-                  parseFloat(e.target.value) || 0,
-                )
-              }
-              min={0}
-            />
-          </div>
-        </div>
-      ))}
+    <div className="space-y-4">
+      {/* Column headers */}
+      <div className="grid grid-cols-[1fr_repeat(4,minmax(0,1fr))] gap-x-2 gap-y-0">
+        <div />
+        {STAT_FIELDS.map(({ label }) => (
+          <p key={label} className="text-[11px] text-center font-medium text-gray-500 uppercase tracking-wide pb-1">
+            {label}
+          </p>
+        ))}
+
+        {/* One row per troop type */}
+        {TROOP_META.map(({ type, icon, label, color }) => (
+          <>
+            {/* Row label */}
+            <div key={`${type}-label`} className="flex items-center gap-1.5 pr-1">
+              <span className="text-sm leading-none">{icon}</span>
+              <span className={`text-xs font-semibold ${color}`}>{label}</span>
+            </div>
+            {/* Stat inputs */}
+            {STAT_FIELDS.map(({ key, step }) => (
+              <input
+                key={`${type}-${key}`}
+                type="number"
+                min={0}
+                step={step ?? "0.1"}
+                value={stats[type][key]}
+                onChange={(e) => set(type, key, parseFloat(e.target.value) || 0)}
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-1.5 py-1.5 text-xs text-white text-right tabular-nums outline-none transition-colors focus:border-kingshot-gold-500 focus:ring-1 focus:ring-kingshot-gold-500/20"
+              />
+            ))}
+          </>
+        ))}
+      </div>
+      <p className="text-[11px] text-gray-600">Values are % bonuses from research / equipment</p>
     </div>
   );
 }

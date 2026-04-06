@@ -96,33 +96,34 @@ export default function BearTrapPage() {
 
           {/* Bottom-right: Player Type + Calculate spanning 2 cols */}
           <div className="lg:col-span-2 flex flex-col sm:flex-row gap-4">
-            <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3 flex-1">
-              <label className="block text-sm font-medium text-kingshot-gold-400">
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex-1 space-y-2">
+              <label className="block text-xs font-medium text-gray-400 uppercase tracking-wide">
                 Player Type
               </label>
-              <select
-                value={config.playerType}
-                onChange={(e) =>
-                  setConfig({
-                    ...config,
-                    playerType: e.target.value as
-                      | "strong"
-                      | "average"
-                      | "joiner",
-                  })
-                }
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-white focus:border-kingshot-gold-500 focus:ring-2 focus:ring-kingshot-gold-500/20 outline-none transition-all"
-              >
-                <option value="strong" className="bg-zinc-900">
-                  Strong (Own Rally First)
-                </option>
-                <option value="average" className="bg-zinc-900">
-                  Average (Balanced)
-                </option>
-                <option value="joiner" className="bg-zinc-900">
-                  Pure Joiner (Joining Only)
-                </option>
-              </select>
+              {/* Segmented picker */}
+              <div className="grid grid-cols-3 gap-1.5">
+                {([
+                  { value: "strong",  label: "Strong",  sub: "Own rally first" },
+                  { value: "average", label: "Average", sub: "Balanced"        },
+                  { value: "joiner",  label: "Joiner",  sub: "Join only"       },
+                ] as const).map(({ value, label, sub }) => {
+                  const active = config.playerType === value;
+                  return (
+                    <button
+                      key={value}
+                      onClick={() => setConfig({ ...config, playerType: value })}
+                      className={`rounded-lg border px-2 py-2 text-center transition-all ${
+                        active
+                          ? "border-kingshot-gold-500 bg-kingshot-gold-500/10 text-kingshot-gold-400"
+                          : "border-white/10 bg-white/5 text-gray-400 hover:border-white/20 hover:text-gray-300"
+                      }`}
+                    >
+                      <p className="text-xs font-semibold">{label}</p>
+                      <p className="text-[10px] opacity-70 mt-0.5">{sub}</p>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             <button
