@@ -31,13 +31,9 @@ export function Input({
         className={`mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder-gray-500 focus:border-kingshot-gold-500 focus:ring-1 focus:ring-kingshot-gold-500/30 outline-none transition-colors ${error ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""} ${className}`}
         {...props}
       />
-      {error && (
-        <p className="mt-1 text-sm text-red-400">{error}</p>
-      )}
+      {error && <p className="mt-1 text-sm text-red-400">{error}</p>}
       {helper && !error && (
-        <p className="mt-1 text-xs text-gray-500">
-          {helper}
-        </p>
+        <p className="mt-1 text-xs text-gray-500">{helper}</p>
       )}
     </div>
   );

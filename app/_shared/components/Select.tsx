@@ -39,18 +39,18 @@ export function Select({
         {...props}
       >
         {options.map((option) => (
-          <option key={option.value} value={option.value} className="bg-zinc-900 text-white">
+          <option
+            key={option.value}
+            value={option.value}
+            className="bg-zinc-900 text-white"
+          >
             {option.label}
           </option>
         ))}
       </select>
-      {error && (
-        <p className="mt-1 text-sm text-red-400">{error}</p>
-      )}
+      {error && <p className="mt-1 text-sm text-red-400">{error}</p>}
       {helper && !error && (
-        <p className="mt-1 text-xs text-gray-500">
-          {helper}
-        </p>
+        <p className="mt-1 text-xs text-gray-500">{helper}</p>
       )}
     </div>
   );

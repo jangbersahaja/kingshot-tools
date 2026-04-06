@@ -8,20 +8,20 @@ export default function ToolsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black">
-      {/* Header/Navigation */}
-      <nav className="border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
+    <div className="flex flex-col min-h-screen">
+      {/* Navigation */}
+      <nav className="border-b border-white/10 bg-white/5 backdrop-blur-sm sticky top-0 z-50">
+        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex h-14 items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
-              <span className="text-xl font-bold text-gray-900 dark:text-white">
+              <span className="text-lg font-bold bg-linear-to-r from-kingshot-gold-400 to-kingshot-primary-400 bg-clip-text text-transparent">
                 Kingshot Tools
               </span>
             </Link>
             <div className="flex gap-4">
               <Link
                 href="/(tools)/beartrap"
-                className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
+                className="text-sm text-gray-400 hover:text-kingshot-gold-400 transition-colors"
               >
                 Bear Trap
               </Link>
@@ -32,16 +32,14 @@ export default function ToolsLayout({
 
       {/* Main Content */}
       <main className="flex-1">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          {children}
-        </div>
+        {children}
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-            © 2026 Kingshot Tools. All rights reserved.
+      <footer className="border-t border-white/10">
+        <div className="max-w-screen-2xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+          <p className="text-center text-xs text-gray-600">
+            © 2026 Kingshot Tools. Community tool — not affiliated with the game.
           </p>
         </div>
       </footer>

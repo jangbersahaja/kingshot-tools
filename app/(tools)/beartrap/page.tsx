@@ -72,102 +72,100 @@ export default function BearTrapPage() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-kingshot-dark-50 via-kingshot-primary-950 to-kingshot-dark-50 dark:from-gray-950 dark:via-kingshot-primary-950 dark:to-gray-950">
-      <div className="max-w-450 mx-auto p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen">
+      <div className="max-w-screen-2xl mx-auto p-4 sm:p-6 lg:p-8">
         {/* Header */}
-        <div className="mb-6 lg:mb-8">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-linear-to-r from-kingshot-gold-400 via-kingshot-primary-400 to-kingshot-gold-400 bg-clip-text text-transparent">
+        <div className="mb-6">
+          <h1 className="text-3xl sm:text-4xl font-bold bg-linear-to-r from-kingshot-gold-400 via-kingshot-primary-400 to-kingshot-gold-400 bg-clip-text text-transparent">
             Magic Bear Formation
           </h1>
-          <p className="mt-2 text-sm sm:text-base text-gray-300 dark:text-gray-400">
+          <p className="mt-1 text-sm text-gray-400">
             Optimize your bear trap event formation for maximum damage output
           </p>
         </div>
 
-        {/* Main Grid - Side by Side on Desktop */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 lg:gap-8">
-          {/* Left Panel - Inputs (Sticky on Desktop) */}
-          <div className="xl:col-span-4 space-y-4">
-            <div className="xl:sticky xl:top-8 space-y-4">
-              <Card title="Troop Inventory">
-                <TroopsInput config={config} onConfigChange={setConfig} />
-              </Card>
+        {/* Input Row - horizontal grid on desktop */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <Card title="Troop Inventory">
+            <TroopsInput config={config} onConfigChange={setConfig} />
+          </Card>
 
-              <Card title="Rally Settings">
-                <RallySettings config={config} onConfigChange={setConfig} />
-              </Card>
+          <Card title="Rally Settings">
+            <RallySettings config={config} onConfigChange={setConfig} />
+          </Card>
 
-              <Card title="Battle Stats">
-                <BattleStatsInput
-                  stats={secondaryStats}
-                  onStatsChange={setSecondaryStats}
-                />
-              </Card>
+          <Card title="Battle Stats">
+            <BattleStatsInput
+              stats={secondaryStats}
+              onStatsChange={setSecondaryStats}
+            />
+          </Card>
 
-              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 space-y-3">
-                <label className="block text-sm font-medium text-kingshot-gold-400">
-                  Player Type
-                </label>
-                <select
-                  value={config.playerType}
-                  onChange={(e) =>
-                    setConfig({
-                      ...config,
-                      playerType: e.target.value as
-                        | "strong"
-                        | "average"
-                        | "joiner",
-                    })
-                  }
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-white focus:border-kingshot-gold-500 focus:ring-2 focus:ring-kingshot-gold-500/20 outline-none transition-all"
-                >
-                  <option value="strong">Strong (Own Rally First)</option>
-                  <option value="average">Average (Balanced)</option>
-                  <option value="joiner">Pure Joiner (Joining Only)</option>
-                </select>
-              </div>
-
-              <button
-                onClick={handleCalculate}
-                className="w-full rounded-xl bg-linear-to-r from-kingshot-gold-500 to-kingshot-gold-600 hover:from-kingshot-gold-600 hover:to-kingshot-gold-700 px-6 py-3.5 text-white font-bold shadow-lg shadow-kingshot-gold-500/30 hover:shadow-kingshot-gold-500/50 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+          {/* Player Type + Calculate */}
+          <div className="flex flex-col gap-4">
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3 flex-1">
+              <label className="block text-sm font-medium text-kingshot-gold-400">
+                Player Type
+              </label>
+              <select
+                value={config.playerType}
+                onChange={(e) =>
+                  setConfig({
+                    ...config,
+                    playerType: e.target.value as
+                      | "strong"
+                      | "average"
+                      | "joiner",
+                  })
+                }
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-white focus:border-kingshot-gold-500 focus:ring-2 focus:ring-kingshot-gold-500/20 outline-none transition-all"
               >
-                Calculate Formation
-              </button>
+                <option value="strong" className="bg-zinc-900">Strong (Own Rally First)</option>
+                <option value="average" className="bg-zinc-900">Average (Balanced)</option>
+                <option value="joiner" className="bg-zinc-900">Pure Joiner (Joining Only)</option>
+              </select>
             </div>
-          </div>
 
-          {/* Right Panel - Results */}
-          <div className="xl:col-span-8">
-            {result ? (
-              <ResultsDisplay result={result} />
-            ) : (
-              <Card>
-                <div className="flex flex-col items-center justify-center h-96 space-y-4">
-                  <div className="w-24 h-24 rounded-full bg-linear-to-br from-kingshot-primary-500/20 to-kingshot-gold-500/20 flex items-center justify-center">
-                    <svg
-                      className="w-12 h-12 text-kingshot-gold-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                      />
-                    </svg>
-                  </div>
-                  <p className="text-gray-400 dark:text-gray-500 text-center">
-                    Fill in your troops and settings, then click{" "}
-                    <span className="text-kingshot-gold-400 font-semibold">
-                      Calculate Formation
-                    </span>
-                  </p>
-                </div>
-              </Card>
-            )}
+            <button
+              onClick={handleCalculate}
+              className="w-full rounded-xl bg-linear-to-r from-kingshot-gold-500 to-kingshot-gold-600 hover:from-kingshot-gold-600 hover:to-kingshot-gold-700 px-6 py-4 text-white font-bold shadow-lg shadow-kingshot-gold-500/30 hover:shadow-kingshot-gold-500/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            >
+              Calculate Formation
+            </button>
           </div>
+        </div>
+
+        {/* Results - full width below inputs */}
+        <div>
+          {result ? (
+            <ResultsDisplay result={result} />
+          ) : (
+            <Card>
+              <div className="flex flex-col items-center justify-center h-48 space-y-3">
+                <div className="w-16 h-16 rounded-full bg-linear-to-br from-kingshot-primary-500/20 to-kingshot-gold-500/20 flex items-center justify-center">
+                  <svg
+                    className="w-8 h-8 text-kingshot-gold-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+                <p className="text-gray-400 text-center text-sm">
+                  Fill in your settings above, then click{" "}
+                  <span className="text-kingshot-gold-400 font-semibold">
+                    Calculate Formation
+                  </span>
+                </p>
+              </div>
+            </Card>
+          )}
         </div>
       </div>
     </div>

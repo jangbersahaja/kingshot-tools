@@ -100,9 +100,7 @@ export default function TroopsInput({
     <div className="space-y-6">
       {/* Add Troop Section */}
       <div className="border-b border-white/10 pb-4">
-        <h3 className="text-sm font-semibold text-gray-200 mb-3">
-          Add Troop
-        </h3>
+        <h3 className="text-sm font-semibold text-gray-200 mb-3">Add Troop</h3>
         <div className="space-y-3">
           <Select
             label="Troop Type"
@@ -147,18 +145,14 @@ export default function TroopsInput({
       {/* Inventory List */}
       <div>
         <div className="flex justify-between items-center mb-3">
-          <h3 className="text-sm font-semibold text-gray-200">
-            Inventory
-          </h3>
+          <h3 className="text-sm font-semibold text-gray-200">Inventory</h3>
           <span className="text-xs text-gray-500">
             Total: {getTotalTroops().toLocaleString()}
           </span>
         </div>
         <div className="space-y-2 max-h-48 overflow-y-auto">
           {config.inventory.items.length === 0 ? (
-            <p className="text-xs text-gray-500">
-              No troops added yet
-            </p>
+            <p className="text-xs text-gray-500">No troops added yet</p>
           ) : (
             config.inventory.items.map((item, index) => (
               <div
@@ -246,9 +240,7 @@ export default function TroopsInput({
       {/* Total Power */}
       <div className="border-t border-white/10 pt-4">
         <div className="bg-linear-to-r from-kingshot-primary-900/40 to-kingshot-primary-800/20 p-4 rounded-lg border border-kingshot-primary-700/30">
-          <p className="text-xs text-gray-400 mb-1">
-            Total Troops Power
-          </p>
+          <p className="text-xs text-gray-400 mb-1">Total Troops Power</p>
           <p className="text-2xl font-bold text-kingshot-primary-300">
             {getTotalPower().toLocaleString()}
           </p>

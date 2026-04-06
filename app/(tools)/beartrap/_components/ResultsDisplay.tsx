@@ -172,52 +172,87 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
                   </div>
                   <div className="space-y-2 mb-3 pb-3 border-b border-white/10">
                     <div>
-                      <p className="text-xs font-semibold text-blue-400 mb-1">Infantry</p>
-                      <p className="text-sm font-bold text-white">{formatNumber(march.infantry)}</p>
-                      {march.infantryTiers && Object.keys(march.infantryTiers).length > 0 && (
-                        <div className="text-xs text-gray-500 mt-1 space-y-0.5 font-mono">
-                          {Object.entries(march.infantryTiers).sort(([a], [b]) => parseInt(b) - parseInt(a)).map(([tier, count]) => (
-                            <div key={tier}>T{tier}: {formatNumber(count)}</div>
-                          ))}
-                        </div>
-                      )}
+                      <p className="text-xs font-semibold text-blue-400 mb-1">
+                        Infantry
+                      </p>
+                      <p className="text-sm font-bold text-white">
+                        {formatNumber(march.infantry)}
+                      </p>
+                      {march.infantryTiers &&
+                        Object.keys(march.infantryTiers).length > 0 && (
+                          <div className="text-xs text-gray-500 mt-1 space-y-0.5 font-mono">
+                            {Object.entries(march.infantryTiers)
+                              .sort(([a], [b]) => parseInt(b) - parseInt(a))
+                              .map(([tier, count]) => (
+                                <div key={tier}>
+                                  T{tier}: {formatNumber(count)}
+                                </div>
+                              ))}
+                          </div>
+                        )}
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-green-400 mb-1">Cavalry</p>
-                      <p className="text-sm font-bold text-white">{formatNumber(march.cavalry)}</p>
-                      {march.cavalryTiers && Object.keys(march.cavalryTiers).length > 0 && (
-                        <div className="text-xs text-gray-500 mt-1 space-y-0.5 font-mono">
-                          {Object.entries(march.cavalryTiers).sort(([a], [b]) => parseInt(b) - parseInt(a)).map(([tier, count]) => (
-                            <div key={tier}>T{tier}: {formatNumber(count)}</div>
-                          ))}
-                        </div>
-                      )}
+                      <p className="text-xs font-semibold text-green-400 mb-1">
+                        Cavalry
+                      </p>
+                      <p className="text-sm font-bold text-white">
+                        {formatNumber(march.cavalry)}
+                      </p>
+                      {march.cavalryTiers &&
+                        Object.keys(march.cavalryTiers).length > 0 && (
+                          <div className="text-xs text-gray-500 mt-1 space-y-0.5 font-mono">
+                            {Object.entries(march.cavalryTiers)
+                              .sort(([a], [b]) => parseInt(b) - parseInt(a))
+                              .map(([tier, count]) => (
+                                <div key={tier}>
+                                  T{tier}: {formatNumber(count)}
+                                </div>
+                              ))}
+                          </div>
+                        )}
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-orange-400 mb-1">Archer</p>
-                      <p className="text-sm font-bold text-white">{formatNumber(march.archer)}</p>
-                      {march.archerTiers && Object.keys(march.archerTiers).length > 0 && (
-                        <div className="text-xs text-gray-500 mt-1 space-y-0.5 font-mono">
-                          {Object.entries(march.archerTiers).sort(([a], [b]) => parseInt(b) - parseInt(a)).map(([tier, count]) => (
-                            <div key={tier}>T{tier}: {formatNumber(count)}</div>
-                          ))}
-                        </div>
-                      )}
+                      <p className="text-xs font-semibold text-orange-400 mb-1">
+                        Archer
+                      </p>
+                      <p className="text-sm font-bold text-white">
+                        {formatNumber(march.archer)}
+                      </p>
+                      {march.archerTiers &&
+                        Object.keys(march.archerTiers).length > 0 && (
+                          <div className="text-xs text-gray-500 mt-1 space-y-0.5 font-mono">
+                            {Object.entries(march.archerTiers)
+                              .sort(([a], [b]) => parseInt(b) - parseInt(a))
+                              .map(([tier, count]) => (
+                                <div key={tier}>
+                                  T{tier}: {formatNumber(count)}
+                                </div>
+                              ))}
+                          </div>
+                        )}
                     </div>
                   </div>
                   {march.damageByType && (
                     <div className="grid grid-cols-3 gap-2 text-xs">
                       <div className="text-center">
                         <p className="text-gray-500">Inf</p>
-                        <p className="font-bold text-blue-400">{formatNumber(Math.floor(march.damageByType.infantry))}</p>
+                        <p className="font-bold text-blue-400">
+                          {formatNumber(
+                            Math.floor(march.damageByType.infantry),
+                          )}
+                        </p>
                       </div>
                       <div className="text-center">
                         <p className="text-gray-500">Cav</p>
-                        <p className="font-bold text-green-400">{formatNumber(Math.floor(march.damageByType.cavalry))}</p>
+                        <p className="font-bold text-green-400">
+                          {formatNumber(Math.floor(march.damageByType.cavalry))}
+                        </p>
                       </div>
                       <div className="text-center">
                         <p className="text-gray-500">Arc</p>
-                        <p className="font-bold text-orange-400">{formatNumber(Math.floor(march.damageByType.archer))}</p>
+                        <p className="font-bold text-orange-400">
+                          {formatNumber(Math.floor(march.damageByType.archer))}
+                        </p>
                       </div>
                     </div>
                   )}
@@ -228,28 +263,43 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
             {/* Mobile Card View */}
             <div className="md:hidden space-y-3">
               {formation.joiners.map((march) => (
-                <div key={march.marchIndex} className="bg-white/5 border border-white/10 p-4 rounded-lg">
+                <div
+                  key={march.marchIndex}
+                  className="bg-white/5 border border-white/10 p-4 rounded-lg"
+                >
                   <div className="flex justify-between items-center mb-3">
-                    <p className="text-sm font-semibold text-gray-200">March #{march.marchIndex}</p>
-                    <p className="text-lg font-bold text-kingshot-gold-400">{formatNumber(Math.floor(march.estimatedDamage))} dmg</p>
+                    <p className="text-sm font-semibold text-gray-200">
+                      March #{march.marchIndex}
+                    </p>
+                    <p className="text-lg font-bold text-kingshot-gold-400">
+                      {formatNumber(Math.floor(march.estimatedDamage))} dmg
+                    </p>
                   </div>
                   <div className="grid grid-cols-3 gap-2 mb-3">
                     <div className="bg-blue-500/10 border border-blue-500/20 p-2 rounded">
                       <p className="text-xs text-gray-400">Infantry</p>
-                      <p className="text-sm font-bold text-blue-400">{formatNumber(march.infantry)}</p>
+                      <p className="text-sm font-bold text-blue-400">
+                        {formatNumber(march.infantry)}
+                      </p>
                     </div>
                     <div className="bg-green-500/10 border border-green-500/20 p-2 rounded">
                       <p className="text-xs text-gray-400">Cavalry</p>
-                      <p className="text-sm font-bold text-green-400">{formatNumber(march.cavalry)}</p>
+                      <p className="text-sm font-bold text-green-400">
+                        {formatNumber(march.cavalry)}
+                      </p>
                     </div>
                     <div className="bg-orange-500/10 border border-orange-500/20 p-2 rounded">
                       <p className="text-xs text-gray-400">Archer</p>
-                      <p className="text-sm font-bold text-orange-400">{formatNumber(march.archer)}</p>
+                      <p className="text-sm font-bold text-orange-400">
+                        {formatNumber(march.archer)}
+                      </p>
                     </div>
                   </div>
                   <div className="border-t border-white/10 pt-3">
                     <p className="text-xs text-gray-400">Total Troops</p>
-                    <p className="text-sm font-bold text-white">{formatNumber(march.totalTroops)}</p>
+                    <p className="text-sm font-bold text-white">
+                      {formatNumber(march.totalTroops)}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -265,14 +315,18 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
             <div className="space-y-4">
               {formation.debugInfo.ownRallyRatio && (
                 <div>
-                  <p className="text-sm text-gray-400 mb-1">Your Rally Formation</p>
+                  <p className="text-sm text-gray-400 mb-1">
+                    Your Rally Formation
+                  </p>
                   <p className="text-lg font-semibold text-white font-mono">
                     {formation.debugInfo.ownRallyRatio}
                   </p>
                 </div>
               )}
               <div>
-                <p className="text-sm text-gray-400 mb-1">Joiner Marches Formation</p>
+                <p className="text-sm text-gray-400 mb-1">
+                  Joiner Marches Formation
+                </p>
                 <p className="text-lg font-semibold text-white font-mono">
                   {formation.debugInfo.joinerRatio}
                 </p>
@@ -288,7 +342,10 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
                   <div>
                     <p className="text-sm text-gray-400">Own Rally Damage</p>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      {Math.floor(formation.ownRally.estimatedDamage).toLocaleString()} × {config.ownRallyCount}
+                      {Math.floor(
+                        formation.ownRally.estimatedDamage,
+                      ).toLocaleString()}{" "}
+                      × {config.ownRallyCount}
                     </p>
                   </div>
                   <p className="text-2xl font-bold text-blue-400">
@@ -310,11 +367,14 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
               {config.playerType !== "joiner" && (
                 <div className="border-t border-white/10 pt-4">
                   <div className="flex justify-between items-center">
-                    <p className="text-sm font-semibold text-gray-200">Total Event Damage</p>
+                    <p className="text-sm font-semibold text-gray-200">
+                      Total Event Damage
+                    </p>
                     <p className="text-3xl font-bold text-kingshot-gold-400">
                       {formatNumber(
                         Math.floor(
-                          (formation.ownRallyDamage ?? 0) + (formation.joinedRallyDamage ?? 0),
+                          (formation.ownRallyDamage ?? 0) +
+                            (formation.joinedRallyDamage ?? 0),
                         ),
                       )}
                     </p>
@@ -328,7 +388,8 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
           <Card title="Troop Allocation Details">
             <div className="space-y-6">
               {(["usedTroops", "unusedTroops"] as const).map((section) => {
-                const label = section === "usedTroops" ? "Used Troops" : "Unused Troops";
+                const label =
+                  section === "usedTroops" ? "Used Troops" : "Unused Troops";
                 const allKeys = [
                   ...Object.keys(formation.debugInfo!.usedTroops),
                   ...Object.keys(formation.debugInfo!.unusedTroops),
@@ -342,34 +403,61 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
 
                 return (
                   <div key={section}>
-                    <h3 className="text-sm font-semibold text-gray-200 mb-3">{label}</h3>
+                    <h3 className="text-sm font-semibold text-gray-200 mb-3">
+                      {label}
+                    </h3>
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b border-white/10">
-                            <th className="text-left py-2 px-2 text-gray-400 font-semibold">Type</th>
+                            <th className="text-left py-2 px-2 text-gray-400 font-semibold">
+                              Type
+                            </th>
                             {sortedTiers.map((tier) => (
-                              <th key={tier} className="text-right py-2 px-2 text-gray-400 font-semibold">
+                              <th
+                                key={tier}
+                                className="text-right py-2 px-2 text-gray-400 font-semibold"
+                              >
                                 T{tier}
                               </th>
                             ))}
-                            <th className="text-right py-2 px-2 text-gray-400 font-semibold">Total</th>
+                            <th className="text-right py-2 px-2 text-gray-400 font-semibold">
+                              Total
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
                           {["infantry", "cavalry", "archer"].map((type) => {
                             const tierCounts: Record<number, number> = {};
                             sortedTiers.forEach((tier) => {
-                              tierCounts[tier] = Object.entries(formation.debugInfo![section])
-                                .filter(([k]) => k === `${type}_T${tier}` || (k.startsWith(type) && k.endsWith(`_T${tier}`)))
+                              tierCounts[tier] = Object.entries(
+                                formation.debugInfo![section],
+                              )
+                                .filter(
+                                  ([k]) =>
+                                    k === `${type}_T${tier}` ||
+                                    (k.startsWith(type) &&
+                                      k.endsWith(`_T${tier}`)),
+                                )
                                 .reduce((sum, [, v]) => sum + v, 0);
                             });
-                            const total = Object.values(tierCounts).reduce((a, b) => a + b, 0);
+                            const total = Object.values(tierCounts).reduce(
+                              (a, b) => a + b,
+                              0,
+                            );
                             return (
-                              <tr key={type} className="border-b border-white/5">
-                                <td className="py-2 px-2 text-gray-200 font-medium capitalize">{type}</td>
+                              <tr
+                                key={type}
+                                className="border-b border-white/5"
+                              >
+                                <td className="py-2 px-2 text-gray-200 font-medium capitalize">
+                                  {type}
+                                </td>
                                 {sortedTiers.map((tier) => (
-                                  <td key={tier} className="text-right py-2 px-2 text-gray-300">
+                                  <td
+                                    key={tier}
+                                    className="text-right py-2 px-2 text-gray-300"
+                                  >
                                     {formatNumber(tierCounts[tier])}
                                   </td>
                                 ))}

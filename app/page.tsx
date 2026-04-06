@@ -14,7 +14,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
             <Link
-              href="/(tools)/beartrap"
+              href="/beartrap"
               className="flex flex-col items-center justify-center p-8 rounded-lg border-2 border-blue-200 hover:border-blue-500 hover:bg-blue-50 dark:border-blue-900 dark:hover:bg-blue-950 transition-colors"
             >
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
