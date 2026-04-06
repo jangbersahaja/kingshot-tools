@@ -31,15 +31,14 @@ export default function ToolsLayout({
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1">
-        {children}
-      </main>
+      <main className="flex-1">{children}</main>
 
       {/* Footer */}
       <footer className="border-t border-white/10">
         <div className="max-w-screen-2xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <p className="text-center text-xs text-gray-600">
-            © 2026 Kingshot Tools. Community tool — not affiliated with the game.
+            © 2026 Kingshot Tools. Community tool — not affiliated with the
+            game.
           </p>
         </div>
       </footer>

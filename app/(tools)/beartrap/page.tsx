@@ -84,12 +84,16 @@ export default function BearTrapPage() {
           </p>
         </div>
 
-        {/* Input Row - horizontal grid on desktop */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Card title="Troop Inventory">
-            <TroopsInput config={config} onConfigChange={setConfig} />
-          </Card>
+        {/* Input Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+          {/* Left: Troop Inventory - spans 2 rows */}
+          <div className="lg:row-span-2">
+            <Card title="Troop Inventory" className="h-full">
+              <TroopsInput config={config} onConfigChange={setConfig} />
+            </Card>
+          </div>
 
+          {/* Top-right: Rally Settings + Battle Stats */}
           <Card title="Rally Settings">
             <RallySettings config={config} onConfigChange={setConfig} />
           </Card>
@@ -101,8 +105,8 @@ export default function BearTrapPage() {
             />
           </Card>
 
-          {/* Player Type + Calculate */}
-          <div className="flex flex-col gap-4">
+          {/* Bottom-right: Player Type + Calculate spanning 2 cols */}
+          <div className="lg:col-span-2 flex flex-col sm:flex-row gap-4">
             <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3 flex-1">
               <label className="block text-sm font-medium text-kingshot-gold-400">
                 Player Type
@@ -128,7 +132,7 @@ export default function BearTrapPage() {
 
             <button
               onClick={handleCalculate}
-              className="w-full rounded-xl bg-linear-to-r from-kingshot-gold-500 to-kingshot-gold-600 hover:from-kingshot-gold-600 hover:to-kingshot-gold-700 px-6 py-4 text-white font-bold shadow-lg shadow-kingshot-gold-500/30 hover:shadow-kingshot-gold-500/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="sm:w-48 rounded-xl bg-linear-to-r from-kingshot-gold-500 to-kingshot-gold-600 hover:from-kingshot-gold-600 hover:to-kingshot-gold-700 px-6 py-4 text-white font-bold shadow-lg shadow-kingshot-gold-500/30 hover:shadow-kingshot-gold-500/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               Calculate Formation
             </button>
