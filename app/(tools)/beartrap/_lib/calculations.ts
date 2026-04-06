@@ -14,6 +14,17 @@ import type {
 } from "@/app/_shared/types";
 
 /**
+ * Default battle stats used for joiner march damage estimation.
+ * Joiners are random players — we use a conservative average baseline
+ * rather than the rally leader's own stats.
+ */
+const DEFAULT_JOINER_STATS: BearTrapSecondaryStats = {
+  infantry: { attack: 438.7, defense: 450.7, lethality: 287.3, health: 330 },
+  cavalry: { attack: 374.4, defense: 388.4, lethality: 276.9, health: 240.2 },
+  archer: { attack: 376.5, defense: 392.5, lethality: 303.5, health: 252.8 },
+};
+
+/**
  * Build used/unused troops map for debugging
  * Tracks troops by tier based on actual tier allocation
  */
@@ -798,17 +809,17 @@ function calculateStrongPlayerFormation(
       calculateEffectiveAttackFactor(
         config.inventory.items,
         "infantry",
-        stats.infantry,
+        DEFAULT_JOINER_STATS.infantry,
       ),
       calculateEffectiveAttackFactor(
         config.inventory.items,
         "cavalry",
-        stats.cavalry,
+        DEFAULT_JOINER_STATS.cavalry,
       ),
       calculateEffectiveAttackFactor(
         config.inventory.items,
         "archer",
-        stats.archer,
+        DEFAULT_JOINER_STATS.archer,
       ),
       infantryByTier[i],
       cavalryByTier[i],
@@ -826,17 +837,17 @@ function calculateStrongPlayerFormation(
       calculateEffectiveAttackFactor(
         config.inventory.items,
         "infantry",
-        stats.infantry,
+        DEFAULT_JOINER_STATS.infantry,
       ),
       calculateEffectiveAttackFactor(
         config.inventory.items,
         "cavalry",
-        stats.cavalry,
+        DEFAULT_JOINER_STATS.cavalry,
       ),
       calculateEffectiveAttackFactor(
         config.inventory.items,
         "archer",
-        stats.archer,
+        DEFAULT_JOINER_STATS.archer,
       ),
       infantryByTier[i],
       cavalryByTier[i],
@@ -860,8 +871,6 @@ function calculateStrongPlayerFormation(
       archerTiers: archerByTier[i],
     });
   }
-
-  // Now calculate own rally damage with tier data
   ownRallyDamage = calculateRallyDamage(
     ownRallyInfantry,
     ownRallyCavalry,
@@ -1204,20 +1213,17 @@ function calculateAveragePlayerFormation(
       calculateEffectiveAttackFactor(
         config.inventory.items,
         "infantry",
-        stats.infantry,
-        config.trapEnhancementLevel,
+        DEFAULT_JOINER_STATS.infantry,
       ),
       calculateEffectiveAttackFactor(
         config.inventory.items,
         "cavalry",
-        stats.cavalry,
-        config.trapEnhancementLevel,
+        DEFAULT_JOINER_STATS.cavalry,
       ),
       calculateEffectiveAttackFactor(
         config.inventory.items,
         "archer",
-        stats.archer,
-        config.trapEnhancementLevel,
+        DEFAULT_JOINER_STATS.archer,
       ),
       infantryByTier[i],
       cavalryByTier[i],
@@ -1235,20 +1241,17 @@ function calculateAveragePlayerFormation(
       calculateEffectiveAttackFactor(
         config.inventory.items,
         "infantry",
-        stats.infantry,
-        config.trapEnhancementLevel,
+        DEFAULT_JOINER_STATS.infantry,
       ),
       calculateEffectiveAttackFactor(
         config.inventory.items,
         "cavalry",
-        stats.cavalry,
-        config.trapEnhancementLevel,
+        DEFAULT_JOINER_STATS.cavalry,
       ),
       calculateEffectiveAttackFactor(
         config.inventory.items,
         "archer",
-        stats.archer,
-        config.trapEnhancementLevel,
+        DEFAULT_JOINER_STATS.archer,
       ),
       infantryByTier[i],
       cavalryByTier[i],
@@ -1530,19 +1533,19 @@ function calculatePureJoinerFormation(
       calculateEffectiveAttackFactor(
         config.inventory.items,
         "infantry",
-        stats.infantry,
+        DEFAULT_JOINER_STATS.infantry,
         config.trapEnhancementLevel,
       ),
       calculateEffectiveAttackFactor(
         config.inventory.items,
         "cavalry",
-        stats.cavalry,
+        DEFAULT_JOINER_STATS.cavalry,
         config.trapEnhancementLevel,
       ),
       calculateEffectiveAttackFactor(
         config.inventory.items,
         "archer",
-        stats.archer,
+        DEFAULT_JOINER_STATS.archer,
         config.trapEnhancementLevel,
       ),
       infantryByTier[i],
@@ -1561,19 +1564,19 @@ function calculatePureJoinerFormation(
       calculateEffectiveAttackFactor(
         config.inventory.items,
         "infantry",
-        stats.infantry,
+        DEFAULT_JOINER_STATS.infantry,
         config.trapEnhancementLevel,
       ),
       calculateEffectiveAttackFactor(
         config.inventory.items,
         "cavalry",
-        stats.cavalry,
+        DEFAULT_JOINER_STATS.cavalry,
         config.trapEnhancementLevel,
       ),
       calculateEffectiveAttackFactor(
         config.inventory.items,
         "archer",
-        stats.archer,
+        DEFAULT_JOINER_STATS.archer,
         config.trapEnhancementLevel,
       ),
       infantryByTier[i],
