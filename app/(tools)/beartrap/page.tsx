@@ -5,9 +5,9 @@ import type {
   BearTrapConfig,
   BearTrapSecondaryStats,
   CalculationResult,
-  TroopInventory,
 } from "@/app/_shared/types";
 import { useState } from "react";
+import { useLocalStorage } from "@/app/_shared/hooks/useLocalStorage";
 import BattleStatsInput from "./_components/BattleStatsInput";
 import RallySettings from "./_components/RallySettings";
 import ResultsDisplay from "./_components/ResultsDisplay";
@@ -20,28 +20,12 @@ const defaultSecondaryStats: BearTrapSecondaryStats = {
   cavalry: { attack: 374.4, defense: 388.4, lethality: 276.9, health: 240.2 },
 };
 
-const defaultInventory: TroopInventory = {
-  items: [
-    { id: "infantry-t10-default", type: "infantry", tier: 10, count: 200000 },
-    { id: "infantry-t9-default", type: "infantry", tier: 9, count: 100000 },
-    { id: "infantry-t8-default", type: "infantry", tier: 8, count: 50000 },
-    { id: "cavalry-t10-default", type: "cavalry", tier: 10, count: 200000 },
-    { id: "cavalry-t9-default", type: "cavalry", tier: 9, count: 100000 },
-    { id: "cavalry-t8-default", type: "cavalry", tier: 8, count: 50000 },
-    { id: "archer-t10-default", type: "archer", tier: 10, count: 200000 },
-    { id: "archer-t9-default", type: "archer", tier: 9, count: 100000 },
-    { id: "archer-t8-default", type: "archer", tier: 8, count: 50000 },
-  ],
-  trueGold: {
-    infantry: 0,
-    archer: 0,
-    cavalry: 0,
-  },
-};
-
 export default function BearTrapPage() {
-  const [config, setConfig] = useState<BearTrapConfig>({
-    inventory: defaultInventory,
+  const [config, setConfig] = useLocalStorage<BearTrapConfig>("beartrap:config", {
+    inventory: {
+      items: [],
+      trueGold: { infantry: 0, archer: 0, cavalry: 0 },
+    },
     marchCapacity: 125000,
     joinerLimit: 65000,
     marchCount: 6,
@@ -51,7 +35,8 @@ export default function BearTrapPage() {
     joinedRallyCount: 50,
   });
 
-  const [secondaryStats, setSecondaryStats] = useState<BearTrapSecondaryStats>(
+  const [secondaryStats, setSecondaryStats] = useLocalStorage<BearTrapSecondaryStats>(
+    "beartrap:secondaryStats",
     defaultSecondaryStats,
   );
 
@@ -77,7 +62,7 @@ export default function BearTrapPage() {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-3xl sm:text-4xl font-bold bg-linear-to-r from-kingshot-gold-400 via-kingshot-primary-400 to-kingshot-gold-400 bg-clip-text text-transparent">
-            Magic Bear Formation
+            Bear Formation Generator
           </h1>
           <p className="mt-1 text-sm text-gray-400">
             Optimize your bear trap event formation for maximum damage output

@@ -6,7 +6,7 @@ export default function Home() {
       <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-gray-900 rounded-lg">
         <div className="text-center space-y-6">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
-            Kingshot Tools
+            Petola Magic Tools
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400">
             Powerful tools for Kingshot players
