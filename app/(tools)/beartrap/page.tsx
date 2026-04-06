@@ -104,7 +104,7 @@ export default function BearTrapPage() {
                 />
               </Card>
 
-              <div className="bg-kingshot-dark-100/50 dark:bg-gray-900/50 backdrop-blur-sm border border-kingshot-primary-900/30 dark:border-kingshot-primary-800/30 rounded-xl p-4 space-y-3">
+              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 space-y-3">
                 <label className="block text-sm font-medium text-kingshot-gold-400">
                   Player Type
                 </label>
@@ -119,7 +119,7 @@ export default function BearTrapPage() {
                         | "joiner",
                     })
                   }
-                  className="w-full rounded-lg border border-kingshot-primary-800/50 bg-kingshot-dark-100 dark:bg-gray-800 px-3 py-2.5 text-white focus:border-kingshot-gold-500 focus:ring-2 focus:ring-kingshot-gold-500/20 transition-all"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-white focus:border-kingshot-gold-500 focus:ring-2 focus:ring-kingshot-gold-500/20 outline-none transition-all"
                 >
                   <option value="strong">Strong (Own Rally First)</option>
                   <option value="average">Average (Balanced)</option>

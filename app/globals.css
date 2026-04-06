@@ -1,26 +1,50 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+@theme {
+  /* Fonts */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Kingshot Primary (Purple) */
+  --color-kingshot-primary-50: #faf5ff;
+  --color-kingshot-primary-100: #f3e8ff;
+  --color-kingshot-primary-200: #e9d5ff;
+  --color-kingshot-primary-300: #d8b4fe;
+  --color-kingshot-primary-400: #c084fc;
+  --color-kingshot-primary-500: #a855f7;
+  --color-kingshot-primary-600: #9333ea;
+  --color-kingshot-primary-700: #7e22ce;
+  --color-kingshot-primary-800: #6b21a8;
+  --color-kingshot-primary-900: #581c87;
+  --color-kingshot-primary-950: #3b0764;
+
+  /* Kingshot Gold */
+  --color-kingshot-gold-50: #fffbeb;
+  --color-kingshot-gold-100: #fef3c7;
+  --color-kingshot-gold-200: #fde68a;
+  --color-kingshot-gold-300: #fcd34d;
+  --color-kingshot-gold-400: #fbbf24;
+  --color-kingshot-gold-500: #f59e0b;
+  --color-kingshot-gold-600: #d97706;
+  --color-kingshot-gold-700: #b45309;
+  --color-kingshot-gold-800: #92400e;
+  --color-kingshot-gold-900: #78350f;
+
+  /* Kingshot Dark (zinc-based) */
+  --color-kingshot-dark-50: #18181b;
+  --color-kingshot-dark-100: #27272a;
+  --color-kingshot-dark-200: #3f3f46;
+  --color-kingshot-dark-300: #52525b;
+  --color-kingshot-dark-400: #71717a;
+  --color-kingshot-dark-500: #a1a1aa;
+  --color-kingshot-dark-600: #d4d4d8;
+  --color-kingshot-dark-700: #e4e4e7;
+  --color-kingshot-dark-800: #f4f4f5;
+  --color-kingshot-dark-900: #fafafa;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  background-color: #0f0a1a;
+  color: #e4e4e7;
 }

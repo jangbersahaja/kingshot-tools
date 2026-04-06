@@ -99,8 +99,8 @@ export default function TroopsInput({
   return (
     <div className="space-y-6">
       {/* Add Troop Section */}
-      <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+      <div className="border-b border-white/10 pb-4">
+        <h3 className="text-sm font-semibold text-gray-200 mb-3">
           Add Troop
         </h3>
         <div className="space-y-3">
@@ -137,7 +137,7 @@ export default function TroopsInput({
           <button
             onClick={handleAddTroop}
             disabled={selectedAmount <= 0}
-            className="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm text-white font-medium hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
+            className="w-full rounded-lg bg-kingshot-primary-600 px-3 py-2 text-sm text-white font-medium hover:bg-kingshot-primary-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             Add
           </button>
@@ -147,25 +147,25 @@ export default function TroopsInput({
       {/* Inventory List */}
       <div>
         <div className="flex justify-between items-center mb-3">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-sm font-semibold text-gray-200">
             Inventory
           </h3>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+          <span className="text-xs text-gray-500">
             Total: {getTotalTroops().toLocaleString()}
           </span>
         </div>
         <div className="space-y-2 max-h-48 overflow-y-auto">
           {config.inventory.items.length === 0 ? (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-gray-500">
               No troops added yet
             </p>
           ) : (
             config.inventory.items.map((item, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-2 rounded text-xs"
+                className="flex items-center justify-between bg-white/5 border border-white/10 p-2 rounded text-xs"
               >
-                <span className="text-gray-900 dark:text-white flex-1">
+                <span className="text-gray-200 flex-1">
                   {item.type.charAt(0).toUpperCase() + item.type.slice(1)} T
                   {item.tier}
                 </span>
@@ -182,11 +182,11 @@ export default function TroopsInput({
                         inventory: { ...config.inventory, items: updated },
                       });
                     }}
-                    className="px-1.5 py-0.5 bg-gray-300 dark:bg-gray-600 rounded hover:bg-gray-400 dark:hover:bg-gray-500 text-gray-900 dark:text-white"
+                    className="px-1.5 py-0.5 bg-white/10 rounded hover:bg-white/20 text-gray-200"
                   >
                     −
                   </button>
-                  <span className="w-12 text-right text-gray-900 dark:text-white font-medium">
+                  <span className="w-12 text-right text-white font-medium">
                     {item.count.toLocaleString()}
                   </span>
                   <button
@@ -198,7 +198,7 @@ export default function TroopsInput({
                         inventory: { ...config.inventory, items: updated },
                       });
                     }}
-                    className="px-1.5 py-0.5 bg-gray-300 dark:bg-gray-600 rounded hover:bg-gray-400 dark:hover:bg-gray-500 text-gray-900 dark:text-white"
+                    className="px-1.5 py-0.5 bg-white/10 rounded hover:bg-white/20 text-gray-200"
                   >
                     +
                   </button>
@@ -216,14 +216,14 @@ export default function TroopsInput({
       </div>
 
       {/* True Gold Levels */}
-      <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+      <div className="border-t border-white/10 pt-4">
+        <h3 className="text-sm font-semibold text-gray-200 mb-3">
           True Gold Levels
         </h3>
         <div className="space-y-2">
           {TROOP_TYPES.map((type) => (
             <div key={type} className="flex items-center justify-between">
-              <label className="text-xs text-gray-700 dark:text-gray-300">
+              <label className="text-xs text-gray-400">
                 {type.charAt(0).toUpperCase() + type.slice(1)}
               </label>
               <select
@@ -231,7 +231,7 @@ export default function TroopsInput({
                 onChange={(e) =>
                   handleTrueGoldChange(type, parseInt(e.target.value))
                 }
-                className="rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="rounded border border-white/10 bg-white/5 px-2 py-1 text-xs text-white"
               >
                 <option value="0">0</option>
                 <option value="1">1</option>
@@ -244,15 +244,15 @@ export default function TroopsInput({
       </div>
 
       {/* Total Power */}
-      <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-        <div className="bg-linear-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
-          <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+      <div className="border-t border-white/10 pt-4">
+        <div className="bg-linear-to-r from-kingshot-primary-900/40 to-kingshot-primary-800/20 p-4 rounded-lg border border-kingshot-primary-700/30">
+          <p className="text-xs text-gray-400 mb-1">
             Total Troops Power
           </p>
-          <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+          <p className="text-2xl font-bold text-kingshot-primary-300">
             {getTotalPower().toLocaleString()}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+          <p className="text-xs text-gray-500 mt-2">
             Match this with the game to verify your inventory
           </p>
         </div>

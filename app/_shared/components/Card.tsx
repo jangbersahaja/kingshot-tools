@@ -14,11 +14,11 @@ export function Card({
 }: CardProps) {
   return (
     <div
-      className={`rounded-xl border border-kingshot-primary-900/30 dark:border-kingshot-primary-800/30 bg-kingshot-dark-100/50 dark:bg-gray-900/50 backdrop-blur-sm p-6 shadow-xl shadow-kingshot-primary-950/20 ${className}`}
+      className={`rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 shadow-xl ${className}`}
       {...props}
     >
       {title && (
-        <div className="mb-4 border-b border-kingshot-primary-900/20 dark:border-kingshot-primary-800/20 pb-3">
+        <div className="mb-4 border-b border-white/10 pb-3">
           <h3 className="text-lg font-bold text-kingshot-gold-400 dark:text-kingshot-gold-400">
             {title}
           </h3>
@@ -29,7 +29,7 @@ export function Card({
           )}
         </div>
       )}
-      <div className="text-gray-200 dark:text-gray-300">{children}</div>
+      <div className="text-gray-200">{children}</div>
     </div>
   );
 }

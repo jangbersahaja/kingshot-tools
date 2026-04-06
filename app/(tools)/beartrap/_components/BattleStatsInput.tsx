@@ -31,7 +31,7 @@ export default function BattleStatsInput({
     <div className="space-y-6">
       {Object.entries(TROOP_TYPES).map(([key, label]) => (
         <div key={key}>
-          <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+          <h4 className="text-sm font-semibold text-gray-200 mb-3">
             {label}
           </h4>
           <div className="grid grid-cols-2 gap-2">

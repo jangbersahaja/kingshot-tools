@@ -8,11 +8,7 @@ interface TooltipProps {
   position?: "top" | "bottom" | "left" | "right";
 }
 
-export function Tooltip({
-  content,
-  children,
-  position = "top",
-}: TooltipProps) {
+export function Tooltip({ content, children, position = "top" }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   const positionClasses = {
