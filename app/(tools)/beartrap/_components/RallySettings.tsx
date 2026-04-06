@@ -28,13 +28,19 @@ function Field({ label, hint, value, min, max, onChange }: FieldProps) {
         onChange={(e) => onChange(parseInt(e.target.value) || min || 0)}
         className="w-full rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-sm text-white tabular-nums outline-none transition-colors focus:border-kingshot-gold-500 focus:ring-1 focus:ring-kingshot-gold-500/20"
       />
-      {hint && <p className="text-[11px] text-gray-600 leading-tight">{hint}</p>}
+      {hint && (
+        <p className="text-[11px] text-gray-600 leading-tight">{hint}</p>
+      )}
     </div>
   );
 }
 
-export default function RallySettings({ config, onConfigChange }: RallySettingsProps) {
-  const set = (updates: Partial<BearTrapConfig>) => onConfigChange({ ...config, ...updates });
+export default function RallySettings({
+  config,
+  onConfigChange,
+}: RallySettingsProps) {
+  const set = (updates: Partial<BearTrapConfig>) =>
+    onConfigChange({ ...config, ...updates });
 
   return (
     <div className="grid grid-cols-2 gap-x-3 gap-y-3">

@@ -102,16 +102,24 @@ export default function BearTrapPage() {
               </label>
               {/* Segmented picker */}
               <div className="grid grid-cols-3 gap-1.5">
-                {([
-                  { value: "strong",  label: "Strong",  sub: "Own rally first" },
-                  { value: "average", label: "Average", sub: "Balanced"        },
-                  { value: "joiner",  label: "Joiner",  sub: "Join only"       },
-                ] as const).map(({ value, label, sub }) => {
+                {(
+                  [
+                    {
+                      value: "strong",
+                      label: "Strong",
+                      sub: "Own rally first",
+                    },
+                    { value: "average", label: "Average", sub: "Balanced" },
+                    { value: "joiner", label: "Joiner", sub: "Join only" },
+                  ] as const
+                ).map(({ value, label, sub }) => {
                   const active = config.playerType === value;
                   return (
                     <button
                       key={value}
-                      onClick={() => setConfig({ ...config, playerType: value })}
+                      onClick={() =>
+                        setConfig({ ...config, playerType: value })
+                      }
                       className={`rounded-lg border px-2 py-2 text-center transition-all ${
                         active
                           ? "border-kingshot-gold-500 bg-kingshot-gold-500/10 text-kingshot-gold-400"
