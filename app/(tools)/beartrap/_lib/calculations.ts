@@ -30,7 +30,8 @@ function buildTroopsDebugInfo(
   const unusedTroops: Record<string, number> = {};
 
   // First, group inventory by type+tier (handles any legacy duplicates in stored data)
-  const grouped: Record<string, { type: string; tier: number; count: number }> = {};
+  const grouped: Record<string, { type: string; tier: number; count: number }> =
+    {};
   items.forEach((item) => {
     const key = `${item.type}_T${item.tier}`;
     if (grouped[key]) {

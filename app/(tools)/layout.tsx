@@ -37,8 +37,8 @@ export default function ToolsLayout({
       <footer className="border-t border-white/10">
         <div className="max-w-screen-2xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <p className="text-center text-xs text-gray-600">
-            © 2026 Kingshot Tools. Community tool — not affiliated with the
-            game.
+            © 2026 Petola Magic Tools. Community tool — not affiliated with the
+            game. (Works in progress)
           </p>
         </div>
       </footer>
