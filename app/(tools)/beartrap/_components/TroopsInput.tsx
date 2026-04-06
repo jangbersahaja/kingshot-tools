@@ -1,15 +1,7 @@
 "use client";
 
-import { Input } from "@/app/_shared/components/Input";
-import { Select } from "@/app/_shared/components/Select";
 import { TROOPS } from "@/app/_shared/data/troops";
-import type {
-  BearTrapConfig,
-  TroopInventoryItem,
-  TroopTier,
-  TroopType,
-} from "@/app/_shared/types";
-import { useState } from "react";
+import type { BearTrapConfig, TroopTier, TroopType } from "@/app/_shared/types";
 
 interface TroopsInputProps {
   config: BearTrapConfig;
@@ -17,250 +9,178 @@ interface TroopsInputProps {
 }
 
 const TROOP_TYPES: TroopType[] = ["infantry", "cavalry", "archer"];
-const TROOP_TIERS: TroopTier[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const TROOP_TIERS: TroopTier[] = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
-export default function TroopsInput({
-  config,
-  onConfigChange,
-}: TroopsInputProps) {
-  const [selectedType, setSelectedType] = useState<TroopType>("infantry");
-  const [selectedTier, setSelectedTier] = useState<TroopTier>(10);
-  const [selectedAmount, setSelectedAmount] = useState(0);
+const TYPE_META: Record<TroopType, { icon: string; label: string; color: string; inputBorder: string; inputFocus: string }> = {
+  infantry: { icon: "⚔️", label: "Infantry", color: "text-blue-400",   inputBorder: "border-blue-500/30",  inputFocus: "focus:border-blue-400" },
+  cavalry:  { icon: "🐴", label: "Cavalry",  color: "text-green-400",  inputBorder: "border-green-500/30", inputFocus: "focus:border-green-400" },
+  archer:   { icon: "🏹", label: "Archer",   color: "text-orange-400", inputBorder: "border-orange-500/30",inputFocus: "focus:border-orange-400" },
+};
 
-  const handleAddTroop = () => {
-    if (selectedAmount <= 0) return;
+export default function TroopsInput({ config, onConfigChange }: TroopsInputProps) {
+  /** Get count for a specific type+tier, 0 if not in inventory */
+  const getCount = (type: TroopType, tier: TroopTier): number =>
+    config.inventory.items.find((i) => i.type === type && i.tier === tier)?.count ?? 0;
 
-    const existingIndex = config.inventory.items.findIndex(
-      (item) => item.type === selectedType && item.tier === selectedTier,
+  /** Update or remove a cell value */
+  const setCount = (type: TroopType, tier: TroopTier, raw: string) => {
+    const value = parseInt(raw.replace(/[^0-9]/g, ""), 10);
+    const count = isNaN(value) ? 0 : Math.max(0, value);
+    const existing = config.inventory.items.findIndex(
+      (i) => i.type === type && i.tier === tier,
     );
-
-    let updatedItems: TroopInventoryItem[];
-    if (existingIndex !== -1) {
-      // Merge into existing row instead of creating a duplicate
-      updatedItems = config.inventory.items.map((item, i) =>
-        i === existingIndex
-          ? { ...item, count: item.count + selectedAmount }
-          : item,
-      );
+    let items = [...config.inventory.items];
+    if (count === 0) {
+      // Remove row if zeroed out
+      if (existing !== -1) items.splice(existing, 1);
+    } else if (existing !== -1) {
+      items[existing] = { ...items[existing], count };
     } else {
-      updatedItems = [
-        ...config.inventory.items,
-        {
-          id: `${selectedType}-t${selectedTier}-${Date.now()}`,
-          type: selectedType,
-          tier: selectedTier,
-          count: selectedAmount,
-        },
-      ];
+      items.push({ id: `${type}-t${tier}-${Date.now()}`, type, tier, count });
     }
-
-    onConfigChange({
-      ...config,
-      inventory: { ...config.inventory, items: updatedItems },
-    });
-
-    setSelectedAmount(0);
+    onConfigChange({ ...config, inventory: { ...config.inventory, items } });
   };
 
-  const handleRemoveItem = (index: number) => {
-    const updatedItems = config.inventory.items.filter((_, i) => i !== index);
-    onConfigChange({
-      ...config,
-      inventory: {
-        ...config.inventory,
-        items: updatedItems,
-      },
-    });
-  };
+  const getTotalByType = (type: TroopType) =>
+    config.inventory.items
+      .filter((i) => i.type === type)
+      .reduce((s, i) => s + i.count, 0);
 
-  const handleTrueGoldChange = (type: TroopType, level: number) => {
-    onConfigChange({
-      ...config,
-      inventory: {
-        ...config.inventory,
-        trueGold: {
-          ...config.inventory.trueGold,
-          [type]: level,
-        },
-      },
-    });
-  };
+  const getTotalTroops = () =>
+    config.inventory.items.reduce((s, i) => s + i.count, 0);
 
-  const getTotalTroops = () => {
-    return config.inventory.items.reduce((sum, item) => sum + item.count, 0);
-  };
-
-  const getTotalPower = () => {
-    return config.inventory.items.reduce((sum, item) => {
-      // Build the true gold suffix based on the trueGold level for this type
+  const getTotalPower = () =>
+    config.inventory.items.reduce((sum, item) => {
       const tgSuffix =
         config.inventory.trueGold[item.type] > 0
           ? `_tg${config.inventory.trueGold[item.type]}`
           : "";
-
-      // Find the troop data with the correct true gold level
       const troopData = TROOPS.find(
-        (t) =>
-          t.type === item.type &&
-          t.id === `${item.type}_t${item.tier}${tgSuffix}`,
+        (t) => t.type === item.type && t.id === `${item.type}_t${item.tier}${tgSuffix}`,
       );
-
-      return sum + (troopData?.power || 0) * item.count;
+      return sum + (troopData?.power ?? 0) * item.count;
     }, 0);
-  };
 
   return (
-    <div className="space-y-6">
-      {/* Add Troop Section */}
-      <div className="border-b border-white/10 pb-4">
-        <h3 className="text-sm font-semibold text-gray-200 mb-3">Add Troop</h3>
-        <div className="space-y-3">
-          <Select
-            label="Troop Type"
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value as TroopType)}
-            options={TROOP_TYPES.map((type) => ({
-              value: type,
-              label: type.charAt(0).toUpperCase() + type.slice(1),
-            }))}
-          />
-
-          <Select
-            label="Troop Tier"
-            value={selectedTier.toString()}
-            onChange={(e) =>
-              setSelectedTier(parseInt(e.target.value) as TroopTier)
-            }
-            options={TROOP_TIERS.map((tier) => ({
-              value: tier.toString(),
-              label: `T${tier}`,
-            }))}
-          />
-
-          <Input
-            label="Amount"
-            type="number"
-            value={selectedAmount}
-            onChange={(e) => setSelectedAmount(parseInt(e.target.value) || 0)}
-            min={0}
-          />
-
-          <button
-            onClick={handleAddTroop}
-            disabled={selectedAmount <= 0}
-            className="w-full rounded-lg bg-kingshot-primary-600 px-3 py-2 text-sm text-white font-medium hover:bg-kingshot-primary-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            Add
-          </button>
-        </div>
-      </div>
-
-      {/* Inventory List */}
-      <div>
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="text-sm font-semibold text-gray-200">Inventory</h3>
-          <span className="text-xs text-gray-500">
-            Total: {getTotalTroops().toLocaleString()}
-          </span>
-        </div>
-        <div className="space-y-2 max-h-48 overflow-y-auto">
-          {config.inventory.items.length === 0 ? (
-            <p className="text-xs text-gray-500">No troops added yet</p>
-          ) : (
-            config.inventory.items.map((item, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between bg-white/5 border border-white/10 p-2 rounded text-xs"
-              >
-                <span className="text-gray-200 flex-1">
-                  {item.type.charAt(0).toUpperCase() + item.type.slice(1)} T
-                  {item.tier}
-                </span>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => {
-                      const updated = [...config.inventory.items];
-                      updated[index] = {
-                        ...item,
-                        count: Math.max(0, item.count - 1),
-                      };
-                      onConfigChange({
-                        ...config,
-                        inventory: { ...config.inventory, items: updated },
-                      });
-                    }}
-                    className="px-1.5 py-0.5 bg-white/10 rounded hover:bg-white/20 text-gray-200"
-                  >
-                    −
-                  </button>
-                  <span className="w-12 text-right text-white font-medium">
-                    {item.count.toLocaleString()}
-                  </span>
-                  <button
-                    onClick={() => {
-                      const updated = [...config.inventory.items];
-                      updated[index] = { ...item, count: item.count + 1 };
-                      onConfigChange({
-                        ...config,
-                        inventory: { ...config.inventory, items: updated },
-                      });
-                    }}
-                    className="px-1.5 py-0.5 bg-white/10 rounded hover:bg-white/20 text-gray-200"
-                  >
-                    +
-                  </button>
-                  <button
-                    onClick={() => handleRemoveItem(index)}
-                    className="px-1.5 py-0.5 text-red-600 hover:text-red-700 font-medium ml-1"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* True Gold Levels */}
-      <div className="border-t border-white/10 pt-4">
-        <h3 className="text-sm font-semibold text-gray-200 mb-3">
-          True Gold Levels
-        </h3>
-        <div className="space-y-2">
-          {TROOP_TYPES.map((type) => (
-            <div key={type} className="flex items-center justify-between">
-              <label className="text-xs text-gray-400">
-                {type.charAt(0).toUpperCase() + type.slice(1)}
-              </label>
-              <select
-                value={config.inventory.trueGold[type]}
-                onChange={(e) =>
-                  handleTrueGoldChange(type, parseInt(e.target.value))
-                }
-                className="rounded border border-white/10 bg-white/5 px-2 py-1 text-xs text-white"
-              >
-                <option value="0">0</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-              </select>
-            </div>
-          ))}
-        </div>
+    <div className="space-y-4">
+      {/* Grid table */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs border-separate border-spacing-y-0.5">
+          <thead>
+            <tr>
+              {/* Tier column header */}
+              <th className="w-8 text-left pb-2 text-gray-500 font-medium">Tier</th>
+              {TROOP_TYPES.map((type) => {
+                const { icon, label, color } = TYPE_META[type];
+                return (
+                  <th key={type} className="pb-2 px-1">
+                    <div className={`flex flex-col items-center gap-0.5 ${color}`}>
+                      <span className="text-base leading-none">{icon}</span>
+                      <span className="font-semibold">{label}</span>
+                    </div>
+                    {/* True Gold inline under header */}
+                    <div className="mt-1.5 flex items-center justify-center gap-1">
+                      <span className="text-gray-500 text-[10px]">TG</span>
+                      <select
+                        value={config.inventory.trueGold[type]}
+                        onChange={(e) =>
+                          onConfigChange({
+                            ...config,
+                            inventory: {
+                              ...config.inventory,
+                              trueGold: {
+                                ...config.inventory.trueGold,
+                                [type]: parseInt(e.target.value),
+                              },
+                            },
+                          })
+                        }
+                        className="rounded border border-white/10 bg-white/5 px-1 py-0.5 text-[10px] text-white w-10"
+                      >
+                        <option value="0" className="bg-zinc-900">0</option>
+                        <option value="1" className="bg-zinc-900">1</option>
+                        <option value="2" className="bg-zinc-900">2</option>
+                        <option value="3" className="bg-zinc-900">3</option>
+                      </select>
+                    </div>
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            {TROOP_TIERS.map((tier) => {
+              const hasAny = TROOP_TYPES.some((t) => getCount(t, tier) > 0);
+              return (
+                <tr
+                  key={tier}
+                  className={hasAny ? "bg-white/4" : "opacity-60 hover:opacity-100"}
+                >
+                  <td className="rounded-l pl-1.5 pr-1 py-1 text-gray-400 font-bold w-8">
+                    T{tier}
+                  </td>
+                  {TROOP_TYPES.map((type) => {
+                    const { inputBorder, inputFocus, color } = TYPE_META[type];
+                    const count = getCount(type, tier);
+                    return (
+                      <td key={type} className="px-1 py-1 last:rounded-r">
+                        <input
+                          type="number"
+                          min={0}
+                          value={count === 0 ? "" : count}
+                          placeholder="0"
+                          onChange={(e) => setCount(type, tier, e.target.value)}
+                          className={`
+                            w-full rounded border bg-white/5 px-1.5 py-1 text-right
+                            outline-none transition-colors
+                            placeholder-gray-600
+                            ${count > 0 ? `${color} font-semibold` : "text-gray-500"}
+                            ${inputBorder} ${inputFocus}
+                            focus:ring-1 focus:ring-current/20
+                          `}
+                        />
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+          {/* Column totals footer */}
+          <tfoot>
+            <tr className="border-t border-white/10">
+              <td className="pt-2 text-[10px] text-gray-500">Total</td>
+              {TROOP_TYPES.map((type) => {
+                const { color } = TYPE_META[type];
+                const total = getTotalByType(type);
+                return (
+                  <td key={type} className={`pt-2 px-1 text-right text-[10px] font-bold ${total > 0 ? color : "text-gray-600"}`}>
+                    {total > 0 ? total.toLocaleString() : "—"}
+                  </td>
+                );
+              })}
+            </tr>
+          </tfoot>
+        </table>
       </div>
 
       {/* Total Power */}
-      <div className="border-t border-white/10 pt-4">
-        <div className="bg-linear-to-r from-kingshot-primary-900/40 to-kingshot-primary-800/20 p-4 rounded-lg border border-kingshot-primary-700/30">
-          <p className="text-xs text-gray-400 mb-1">Total Troops Power</p>
-          <p className="text-2xl font-bold text-kingshot-primary-300">
-            {getTotalPower().toLocaleString()}
-          </p>
-          <p className="text-xs text-gray-500 mt-2">
-            Match this with the game to verify your inventory
-          </p>
+      <div className="border-t border-white/10 pt-3">
+        <div className="bg-linear-to-r from-kingshot-primary-900/40 to-kingshot-primary-800/20 px-4 py-3 rounded-lg border border-kingshot-primary-700/30 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-[10px] text-gray-400 uppercase tracking-wide">Total Troops</p>
+            <p className="text-lg font-bold text-white">{getTotalTroops().toLocaleString()}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] text-gray-400 uppercase tracking-wide">Total Power</p>
+            <p className="text-lg font-bold text-kingshot-primary-300">
+              {getTotalPower().toLocaleString()}
+            </p>
+          </div>
         </div>
+        <p className="text-[10px] text-gray-600 mt-1.5 text-center">
+          Match Total Power with your in-game troop power to verify
+        </p>
       </div>
     </div>
   );
