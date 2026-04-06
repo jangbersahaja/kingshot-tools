@@ -1,6 +1,7 @@
 "use client";
 
 import type { BearTrapSecondaryStats, TroopType } from "@/app/_shared/types";
+import React from "react";
 
 interface BattleStatsInputProps {
   stats: BearTrapSecondaryStats;
@@ -52,12 +53,9 @@ export default function BattleStatsInput({
 
         {/* One row per troop type */}
         {TROOP_META.map(({ type, icon, label, color }) => (
-          <>
+          <React.Fragment key={type}>
             {/* Row label */}
-            <div
-              key={`${type}-label`}
-              className="flex items-center gap-1.5 pr-1"
-            >
+            <div className="flex items-center gap-1.5 pr-1">
               <span className="text-sm leading-none">{icon}</span>
               <span className={`text-xs font-semibold ${color}`}>{label}</span>
             </div>
@@ -75,7 +73,7 @@ export default function BattleStatsInput({
                 className="w-full mb-2 rounded-lg border border-white/10 bg-white/5 px-1.5 py-1.5 text-xs text-white text-right tabular-nums outline-none transition-colors focus:border-kingshot-gold-500 focus:ring-1 focus:ring-kingshot-gold-500/20"
               />
             ))}
-          </>
+          </React.Fragment>
         ))}
       </div>
       <p className="text-[11px] text-gray-600">

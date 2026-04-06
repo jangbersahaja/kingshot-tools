@@ -45,19 +45,28 @@ export default function BearTrapPage() {
     );
 
   const [result, setResult] = useState<CalculationResult | null>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
 
   const handleCalculate = () => {
     if (config.inventory.items.length === 0) {
       alert("Please add at least one troop to your inventory");
       return;
     }
-    const formation = calculateBearTrapFormation(config, secondaryStats);
-    setResult({
-      config,
-      secondaryStats,
-      formation,
-      recommendations: [],
-    });
+    setIsCalculating(true);
+    // Defer to next tick so the loading state renders before the CPU-bound work
+    setTimeout(() => {
+      try {
+        const formation = calculateBearTrapFormation(config, secondaryStats);
+        setResult({
+          config,
+          secondaryStats,
+          formation,
+          recommendations: [],
+        });
+      } finally {
+        setIsCalculating(false);
+      }
+    }, 0);
   };
 
   return (
@@ -136,9 +145,36 @@ export default function BearTrapPage() {
 
             <button
               onClick={handleCalculate}
-              className="sm:w-48 rounded-xl bg-linear-to-r from-kingshot-gold-500 to-kingshot-gold-600 hover:from-kingshot-gold-600 hover:to-kingshot-gold-700 px-6 py-4 text-white font-bold shadow-lg shadow-kingshot-gold-500/30 hover:shadow-kingshot-gold-500/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              disabled={isCalculating}
+              className="sm:w-48 rounded-xl bg-linear-to-r from-kingshot-gold-500 to-kingshot-gold-600 hover:from-kingshot-gold-600 hover:to-kingshot-gold-700 px-6 py-4 text-white font-bold shadow-lg shadow-kingshot-gold-500/30 hover:shadow-kingshot-gold-500/50 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-none flex items-center justify-center gap-2"
             >
-              Calculate Formation
+              {isCalculating ? (
+                <>
+                  <svg
+                    className="animate-spin h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
+                  </svg>
+                  Calculating…
+                </>
+              ) : (
+                "Calculate Formation"
+              )}
             </button>
           </div>
         </div>
