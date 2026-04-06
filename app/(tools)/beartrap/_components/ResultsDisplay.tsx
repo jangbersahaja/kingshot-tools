@@ -243,21 +243,33 @@ function MarchCard({
 
 // ─── sidebar sub-components ─────────────────────────────────────────────────
 
-function FormationRatiosCard({ formation }: { formation: CalculationResult["formation"] }) {
+function FormationRatiosCard({
+  formation,
+}: {
+  formation: CalculationResult["formation"];
+}) {
   if (!formation.debugInfo) return null;
   return (
     <Card title="Formation Ratios">
       <div className="space-y-2">
         {formation.debugInfo.ownRallyRatio && (
           <div className="bg-white/5 rounded-lg p-3">
-            <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Own Rally</p>
-            <p className="text-sm font-semibold text-white font-mono">{formation.debugInfo.ownRallyRatio}</p>
+            <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">
+              Own Rally
+            </p>
+            <p className="text-sm font-semibold text-white font-mono">
+              {formation.debugInfo.ownRallyRatio}
+            </p>
           </div>
         )}
         {formation.debugInfo.joinerRatio && (
           <div className="bg-white/5 rounded-lg p-3">
-            <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Joiner Marches</p>
-            <p className="text-sm font-semibold text-white font-mono">{formation.debugInfo.joinerRatio}</p>
+            <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">
+              Joiner Marches
+            </p>
+            <p className="text-sm font-semibold text-white font-mono">
+              {formation.debugInfo.joinerRatio}
+            </p>
           </div>
         )}
       </div>
@@ -265,7 +277,10 @@ function FormationRatiosCard({ formation }: { formation: CalculationResult["form
   );
 }
 
-function RallyDamageSummaryCard({ formation, config }: Pick<CalculationResult, "formation" | "config">) {
+function RallyDamageSummaryCard({
+  formation,
+  config,
+}: Pick<CalculationResult, "formation" | "config">) {
   return (
     <Card title="Rally Damage Summary">
       <div className="space-y-2">
@@ -275,10 +290,13 @@ function RallyDamageSummaryCard({ formation, config }: Pick<CalculationResult, "
               <div>
                 <p className="text-xs text-gray-400">Own Rally</p>
                 <p className="text-[10px] text-gray-600 mt-0.5">
-                  {fmtDmg(formation.ownRally.estimatedDamage)} × {config.ownRallyCount}
+                  {fmtDmg(formation.ownRally.estimatedDamage)} ×{" "}
+                  {config.ownRallyCount}
                 </p>
               </div>
-              <p className="text-lg font-bold text-blue-400 tabular-nums">{fmtDmg(formation.ownRallyDamage ?? 0)}</p>
+              <p className="text-lg font-bold text-blue-400 tabular-nums">
+                {fmtDmg(formation.ownRallyDamage ?? 0)}
+              </p>
             </div>
           </div>
         )}
@@ -286,16 +304,25 @@ function RallyDamageSummaryCard({ formation, config }: Pick<CalculationResult, "
           <div className="flex items-start justify-between gap-2">
             <div>
               <p className="text-xs text-gray-400">Joined Rallies</p>
-              <p className="text-[10px] text-gray-600 mt-0.5">avg × ⅔ × {config.joinedRallyCount}</p>
+              <p className="text-[10px] text-gray-600 mt-0.5">
+                avg × ⅔ × {config.joinedRallyCount}
+              </p>
             </div>
-            <p className="text-lg font-bold text-green-400 tabular-nums">{fmtDmg(formation.joinedRallyDamage ?? 0)}</p>
+            <p className="text-lg font-bold text-green-400 tabular-nums">
+              {fmtDmg(formation.joinedRallyDamage ?? 0)}
+            </p>
           </div>
         </div>
         {config.playerType !== "joiner" && (
           <div className="bg-kingshot-gold-500/5 border border-kingshot-gold-500/20 rounded-lg px-3 py-3 mt-1">
-            <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Total Event Damage</p>
+            <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">
+              Total Event Damage
+            </p>
             <p className="text-2xl font-bold text-kingshot-gold-400 tabular-nums">
-              {fmtDmg((formation.ownRallyDamage ?? 0) + (formation.joinedRallyDamage ?? 0))}
+              {fmtDmg(
+                (formation.ownRallyDamage ?? 0) +
+                  (formation.joinedRallyDamage ?? 0),
+              )}
             </p>
           </div>
         )}
@@ -325,18 +352,29 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
           const isUsed = section === "usedTroops";
           return (
             <div key={section}>
-              <h3 className={`text-xs font-semibold uppercase tracking-wide mb-2 ${isUsed ? "text-green-400" : "text-gray-500"}`}>
+              <h3
+                className={`text-xs font-semibold uppercase tracking-wide mb-2 ${isUsed ? "text-green-400" : "text-gray-500"}`}
+              >
                 {isUsed ? "✓ Used Troops" : "◌ Unused Troops"}
               </h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-white/10">
-                      <th className="text-left py-1.5 pr-3 text-gray-500 font-medium">Type</th>
+                      <th className="text-left py-1.5 pr-3 text-gray-500 font-medium">
+                        Type
+                      </th>
                       {sortedTiers.map((tier) => (
-                        <th key={tier} className="text-right py-1.5 px-2 text-gray-500 font-medium">T{tier}</th>
+                        <th
+                          key={tier}
+                          className="text-right py-1.5 px-2 text-gray-500 font-medium"
+                        >
+                          T{tier}
+                        </th>
                       ))}
-                      <th className="text-right py-1.5 pl-3 text-gray-500 font-medium">Total</th>
+                      <th className="text-right py-1.5 pl-3 text-gray-500 font-medium">
+                        Total
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -349,17 +387,31 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
                           .filter(([k]) => k === `${type}_T${tier}`)
                           .reduce((s, [, v]) => s + v, 0);
                       });
-                      const total = Object.values(tierCounts).reduce((a, b) => a + b, 0);
+                      const total = Object.values(tierCounts).reduce(
+                        (a, b) => a + b,
+                        0,
+                      );
                       if (total === 0) return null;
                       return (
                         <tr key={type} className="border-b border-white/5">
-                          <td className={`py-1.5 pr-3 font-semibold capitalize ${text}`}>{icon} {type}</td>
+                          <td
+                            className={`py-1.5 pr-3 font-semibold capitalize ${text}`}
+                          >
+                            {icon} {type}
+                          </td>
                           {sortedTiers.map((tier) => (
-                            <td key={tier} className="text-right py-1.5 px-2 text-gray-300 tabular-nums">
-                              {tierCounts[tier] > 0 ? fmtNum(tierCounts[tier]) : "—"}
+                            <td
+                              key={tier}
+                              className="text-right py-1.5 px-2 text-gray-300 tabular-nums"
+                            >
+                              {tierCounts[tier] > 0
+                                ? fmtNum(tierCounts[tier])
+                                : "—"}
                             </td>
                           ))}
-                          <td className="text-right py-1.5 pl-3 text-white font-bold tabular-nums">{fmtNum(total)}</td>
+                          <td className="text-right py-1.5 pl-3 text-white font-bold tabular-nums">
+                            {fmtNum(total)}
+                          </td>
                         </tr>
                       );
                     })}
@@ -376,21 +428,38 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
   return (
     // Desktop: 2/3 main + 1/3 sidebar. Mobile: single column.
     <div className="flex flex-col lg:flex-row gap-6 items-start">
-
       {/* ── Main column (2/3) ── */}
       <div className="w-full lg:flex-2 space-y-6 min-w-0">
         {/* Configuration Summary */}
         <Card title="Configuration">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
             {[
-              { label: "Player Type",    value: config.playerType,                  cap: true  },
-              { label: "March Capacity", value: fmtNum(config.marchCapacity),       cap: false },
-              { label: "Joiner Limit",   value: fmtNum(config.joinerLimit),         cap: false },
-              { label: "Trap Level",     value: `Lv ${config.trapEnhancementLevel}`, cap: false },
+              { label: "Player Type", value: config.playerType, cap: true },
+              {
+                label: "March Capacity",
+                value: fmtNum(config.marchCapacity),
+                cap: false,
+              },
+              {
+                label: "Joiner Limit",
+                value: fmtNum(config.joinerLimit),
+                cap: false,
+              },
+              {
+                label: "Trap Level",
+                value: `Lv ${config.trapEnhancementLevel}`,
+                cap: false,
+              },
             ].map(({ label, value, cap }) => (
               <div key={label}>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">{label}</p>
-                <p className={`text-base font-semibold text-white mt-0.5 ${cap ? "capitalize" : ""}`}>{value}</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">
+                  {label}
+                </p>
+                <p
+                  className={`text-base font-semibold text-white mt-0.5 ${cap ? "capitalize" : ""}`}
+                >
+                  {value}
+                </p>
               </div>
             ))}
           </div>
@@ -399,7 +468,11 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
         {/* Own Rally Formation */}
         {config.playerType !== "joiner" && (
           <Card title="Your Rally Formation">
-            <MarchCard march={formation.ownRally} label="Own Rally" showDamage />
+            <MarchCard
+              march={formation.ownRally}
+              label="Own Rally"
+              showDamage
+            />
           </Card>
         )}
 
@@ -424,11 +497,10 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
       </div>
 
       {/* ── Sidebar (1/3) ── */}
-      <div className="w-full lg:flex-1 space-y-4 lg:sticky lg:top-4 min-w-0">
+      <div className="w-full lg:flex-1 space-y-4 lg:sticky lg:top-20 min-w-0">
         <FormationRatiosCard formation={formation} />
         <RallyDamageSummaryCard formation={formation} config={config} />
       </div>
-
     </div>
   );
 }
