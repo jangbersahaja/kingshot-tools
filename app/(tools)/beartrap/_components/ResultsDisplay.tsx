@@ -14,6 +14,18 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
     return num.toLocaleString();
   };
 
+  const troopMeta = {
+    infantry: { icon: "⚔️", label: "Infantry", color: "blue" as const },
+    cavalry:  { icon: "🐴", label: "Cavalry",  color: "green" as const },
+    archer:   { icon: "🏹", label: "Archer",   color: "orange" as const },
+  };
+
+  const colorClasses = {
+    blue:   { card: "bg-blue-500/10 border-blue-500/20",   text: "text-blue-400" },
+    green:  { card: "bg-green-500/10 border-green-500/20", text: "text-green-400" },
+    orange: { card: "bg-orange-500/10 border-orange-500/20", text: "text-orange-400" },
+  };
+
   return (
     <div className="space-y-6">
       {/* Configuration Summary */}
@@ -51,60 +63,32 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
         <Card title="Your Rally Formation">
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-4">
-              <div className="bg-blue-500/10 border border-blue-500/20 p-3 rounded-lg">
-                <p className="text-xs text-gray-400">Infantry</p>
-                <p className="text-lg font-bold text-blue-400">
-                  {formatNumber(formation.ownRally.infantry)}
-                </p>
-                {formation.ownRally.infantryTiers &&
-                  Object.keys(formation.ownRally.infantryTiers).length > 0 && (
-                    <div className="text-xs text-gray-500 mt-1 space-y-0.5">
-                      {Object.entries(formation.ownRally.infantryTiers)
-                        .sort(([a], [b]) => parseInt(b) - parseInt(a))
-                        .map(([tier, count]) => (
-                          <div key={tier}>
-                            T{tier}: {formatNumber(count)}
-                          </div>
-                        ))}
+              {(["infantry", "cavalry", "archer"] as const).map((type) => {
+                const { icon, label, color } = troopMeta[type];
+                const { card, text } = colorClasses[color];
+                const count = formation.ownRally[type];
+                const tiers = formation.ownRally[`${type}Tiers` as keyof typeof formation.ownRally] as Record<string, number> | undefined;
+                return (
+                  <div key={type} className={`${card} border p-3 rounded-lg`}>
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="text-base leading-none">{icon}</span>
+                      <p className="text-xs text-gray-400">{label}</p>
                     </div>
-                  )}
-              </div>
-              <div className="bg-green-500/10 border border-green-500/20 p-3 rounded-lg">
-                <p className="text-xs text-gray-400">Cavalry</p>
-                <p className="text-lg font-bold text-green-400">
-                  {formatNumber(formation.ownRally.cavalry)}
-                </p>
-                {formation.ownRally.cavalryTiers &&
-                  Object.keys(formation.ownRally.cavalryTiers).length > 0 && (
-                    <div className="text-xs text-gray-500 mt-1 space-y-0.5">
-                      {Object.entries(formation.ownRally.cavalryTiers)
-                        .sort(([a], [b]) => parseInt(b) - parseInt(a))
-                        .map(([tier, count]) => (
-                          <div key={tier}>
-                            T{tier}: {formatNumber(count)}
-                          </div>
-                        ))}
-                    </div>
-                  )}
-              </div>
-              <div className="bg-orange-500/10 border border-orange-500/20 p-3 rounded-lg">
-                <p className="text-xs text-gray-400">Archer</p>
-                <p className="text-lg font-bold text-orange-400">
-                  {formatNumber(formation.ownRally.archer)}
-                </p>
-                {formation.ownRally.archerTiers &&
-                  Object.keys(formation.ownRally.archerTiers).length > 0 && (
-                    <div className="text-xs text-gray-500 mt-1 space-y-0.5">
-                      {Object.entries(formation.ownRally.archerTiers)
-                        .sort(([a], [b]) => parseInt(b) - parseInt(a))
-                        .map(([tier, count]) => (
-                          <div key={tier}>
-                            T{tier}: {formatNumber(count)}
-                          </div>
-                        ))}
-                    </div>
-                  )}
-              </div>
+                    <p className={`text-lg font-bold ${text}`}>
+                      {formatNumber(count)}
+                    </p>
+                    {tiers && Object.keys(tiers).length > 0 && (
+                      <div className="text-xs text-gray-500 mt-1 space-y-0.5">
+                        {Object.entries(tiers)
+                          .sort(([a], [b]) => parseInt(b) - parseInt(a))
+                          .map(([tier, cnt]) => (
+                            <div key={tier}>T{tier}: {formatNumber(cnt)}</div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
             <div className="border-t border-white/10 pt-3">
               <p className="text-sm text-gray-400">Total Troops</p>
@@ -119,30 +103,18 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
                 <div className="mt-3 pt-3 border-t border-white/10">
                   <p className="text-xs text-gray-400 mb-2">Damage by Type</p>
                   <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div className="bg-blue-500/10 border border-blue-500/20 p-2 rounded">
-                      <p className="text-gray-400">Infantry</p>
-                      <p className="font-bold text-blue-400">
-                        {formatNumber(
-                          Math.floor(formation.ownRally.damageByType.infantry),
-                        )}
-                      </p>
-                    </div>
-                    <div className="bg-green-500/10 border border-green-500/20 p-2 rounded">
-                      <p className="text-gray-400">Cavalry</p>
-                      <p className="font-bold text-green-400">
-                        {formatNumber(
-                          Math.floor(formation.ownRally.damageByType.cavalry),
-                        )}
-                      </p>
-                    </div>
-                    <div className="bg-orange-500/10 border border-orange-500/20 p-2 rounded">
-                      <p className="text-gray-400">Archer</p>
-                      <p className="font-bold text-orange-400">
-                        {formatNumber(
-                          Math.floor(formation.ownRally.damageByType.archer),
-                        )}
-                      </p>
-                    </div>
+                    {([ "infantry", "cavalry", "archer"] as const).map((type) => {
+                      const { icon, label, color } = troopMeta[type];
+                      const { card, text } = colorClasses[color];
+                      return (
+                        <div key={type} className={`${card} border p-2 rounded`}>
+                          <p className="text-gray-400">{icon} {label}</p>
+                          <p className={`font-bold ${text}`}>
+                            {formatNumber(Math.floor(formation.ownRally.damageByType![type]))}
+                          </p>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -171,89 +143,46 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
                     </p>
                   </div>
                   <div className="space-y-2 mb-3 pb-3 border-b border-white/10">
-                    <div>
-                      <p className="text-xs font-semibold text-blue-400 mb-1">
-                        Infantry
-                      </p>
-                      <p className="text-sm font-bold text-white">
-                        {formatNumber(march.infantry)}
-                      </p>
-                      {march.infantryTiers &&
-                        Object.keys(march.infantryTiers).length > 0 && (
-                          <div className="text-xs text-gray-500 mt-1 space-y-0.5 font-mono">
-                            {Object.entries(march.infantryTiers)
-                              .sort(([a], [b]) => parseInt(b) - parseInt(a))
-                              .map(([tier, count]) => (
-                                <div key={tier}>
-                                  T{tier}: {formatNumber(count)}
-                                </div>
-                              ))}
-                          </div>
-                        )}
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-green-400 mb-1">
-                        Cavalry
-                      </p>
-                      <p className="text-sm font-bold text-white">
-                        {formatNumber(march.cavalry)}
-                      </p>
-                      {march.cavalryTiers &&
-                        Object.keys(march.cavalryTiers).length > 0 && (
-                          <div className="text-xs text-gray-500 mt-1 space-y-0.5 font-mono">
-                            {Object.entries(march.cavalryTiers)
-                              .sort(([a], [b]) => parseInt(b) - parseInt(a))
-                              .map(([tier, count]) => (
-                                <div key={tier}>
-                                  T{tier}: {formatNumber(count)}
-                                </div>
-                              ))}
-                          </div>
-                        )}
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-orange-400 mb-1">
-                        Archer
-                      </p>
-                      <p className="text-sm font-bold text-white">
-                        {formatNumber(march.archer)}
-                      </p>
-                      {march.archerTiers &&
-                        Object.keys(march.archerTiers).length > 0 && (
-                          <div className="text-xs text-gray-500 mt-1 space-y-0.5 font-mono">
-                            {Object.entries(march.archerTiers)
-                              .sort(([a], [b]) => parseInt(b) - parseInt(a))
-                              .map(([tier, count]) => (
-                                <div key={tier}>
-                                  T{tier}: {formatNumber(count)}
-                                </div>
-                              ))}
-                          </div>
-                        )}
-                    </div>
+                    {(["infantry", "cavalry", "archer"] as const).map((type) => {
+                      const { icon, label, color } = troopMeta[type];
+                      const { text } = colorClasses[color];
+                      const count = march[type];
+                      const tiers = march[`${type}Tiers` as keyof typeof march] as Record<string, number> | undefined;
+                      return (
+                        <div key={type}>
+                          <p className={`text-xs font-semibold ${text} mb-1`}>
+                            {icon} {label}
+                          </p>
+                          <p className="text-sm font-bold text-white">
+                            {formatNumber(count as number)}
+                          </p>
+                          {tiers && Object.keys(tiers).length > 0 && (
+                            <div className="text-xs text-gray-500 mt-1 space-y-0.5 font-mono">
+                              {Object.entries(tiers)
+                                .sort(([a], [b]) => parseInt(b) - parseInt(a))
+                                .map(([tier, cnt]) => (
+                                  <div key={tier}>T{tier}: {formatNumber(cnt)}</div>
+                                ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                   {march.damageByType && (
                     <div className="grid grid-cols-3 gap-2 text-xs">
-                      <div className="text-center">
-                        <p className="text-gray-500">Inf</p>
-                        <p className="font-bold text-blue-400">
-                          {formatNumber(
-                            Math.floor(march.damageByType.infantry),
-                          )}
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-gray-500">Cav</p>
-                        <p className="font-bold text-green-400">
-                          {formatNumber(Math.floor(march.damageByType.cavalry))}
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-gray-500">Arc</p>
-                        <p className="font-bold text-orange-400">
-                          {formatNumber(Math.floor(march.damageByType.archer))}
-                        </p>
-                      </div>
+                      {(["infantry", "cavalry", "archer"] as const).map((type) => {
+                        const { icon, color } = troopMeta[type];
+                        const { text } = colorClasses[color];
+                        return (
+                          <div key={type} className="text-center">
+                            <p className="text-gray-500">{icon}</p>
+                            <p className={`font-bold ${text}`}>
+                              {formatNumber(Math.floor(march.damageByType![type]))}
+                            </p>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -276,24 +205,18 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
                     </p>
                   </div>
                   <div className="grid grid-cols-3 gap-2 mb-3">
-                    <div className="bg-blue-500/10 border border-blue-500/20 p-2 rounded">
-                      <p className="text-xs text-gray-400">Infantry</p>
-                      <p className="text-sm font-bold text-blue-400">
-                        {formatNumber(march.infantry)}
-                      </p>
-                    </div>
-                    <div className="bg-green-500/10 border border-green-500/20 p-2 rounded">
-                      <p className="text-xs text-gray-400">Cavalry</p>
-                      <p className="text-sm font-bold text-green-400">
-                        {formatNumber(march.cavalry)}
-                      </p>
-                    </div>
-                    <div className="bg-orange-500/10 border border-orange-500/20 p-2 rounded">
-                      <p className="text-xs text-gray-400">Archer</p>
-                      <p className="text-sm font-bold text-orange-400">
-                        {formatNumber(march.archer)}
-                      </p>
-                    </div>
+                    {(["infantry", "cavalry", "archer"] as const).map((type) => {
+                      const { icon, label, color } = troopMeta[type];
+                      const { card, text } = colorClasses[color];
+                      return (
+                        <div key={type} className={`${card} border p-2 rounded`}>
+                          <p className="text-xs text-gray-400">{icon} {label}</p>
+                          <p className={`text-sm font-bold ${text}`}>
+                            {formatNumber(march[type] as number)}
+                          </p>
+                        </div>
+                      );
+                    })}
                   </div>
                   <div className="border-t border-white/10 pt-3">
                     <p className="text-xs text-gray-400">Total Troops</p>

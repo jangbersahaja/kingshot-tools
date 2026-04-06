@@ -124,9 +124,15 @@ export default function BearTrapPage() {
                 }
                 className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-white focus:border-kingshot-gold-500 focus:ring-2 focus:ring-kingshot-gold-500/20 outline-none transition-all"
               >
-                <option value="strong" className="bg-zinc-900">Strong (Own Rally First)</option>
-                <option value="average" className="bg-zinc-900">Average (Balanced)</option>
-                <option value="joiner" className="bg-zinc-900">Pure Joiner (Joining Only)</option>
+                <option value="strong" className="bg-zinc-900">
+                  Strong (Own Rally First)
+                </option>
+                <option value="average" className="bg-zinc-900">
+                  Average (Balanced)
+                </option>
+                <option value="joiner" className="bg-zinc-900">
+                  Pure Joiner (Joining Only)
+                </option>
               </select>
             </div>
 
