@@ -196,6 +196,36 @@ export default function BearTrapPage() {
     [setProfiles],
   );
 
+  const handleDuplicate = useCallback(
+    (id: string) => {
+      if (profiles.length >= MAX_PROFILES) return;
+      const source = profiles.find((p) => p.id === id);
+      if (!source) return;
+      // If duplicating the active profile, use the current working state
+      // so unsaved edits are carried over into the copy.
+      const srcConfig = id === activeProfileId ? config : source.config;
+      const srcStats =
+        id === activeProfileId ? secondaryStats : source.secondaryStats;
+      const copy = makeProfile(`${source.name} (copy)`, srcConfig, srcStats);
+      setProfiles((prev) => [...prev, copy]);
+      // Switch to the new copy and load it as working state
+      setActiveProfileId(copy.id);
+      setConfigRaw(copy.config);
+      setSecondaryStatsRaw(copy.secondaryStats);
+      setDraft(null);
+      setHasUnsavedChanges(false);
+    },
+    [
+      activeProfileId,
+      config,
+      profiles,
+      secondaryStats,
+      setActiveProfileId,
+      setDraft,
+      setProfiles,
+    ],
+  );
+
   const handleDelete = useCallback(
     (id: string) => {
       const remaining = profiles.filter((p) => p.id !== id);
@@ -273,6 +303,7 @@ export default function BearTrapPage() {
           onSwitch={handleSwitch}
           onSave={handleSave}
           onNew={handleNew}
+          onDuplicate={handleDuplicate}
           onRename={handleRename}
           onDelete={handleDelete}
         />

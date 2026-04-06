@@ -12,6 +12,7 @@ interface ProfileManagerProps {
   onSwitch: (id: string) => void;
   onSave: () => void;
   onNew: () => void;
+  onDuplicate: (id: string) => void;
   onRename: (id: string, name: string) => void;
   onDelete: (id: string) => void;
 }
@@ -23,6 +24,7 @@ export default function ProfileManager({
   onSwitch,
   onSave,
   onNew,
+  onDuplicate,
   onRename,
   onDelete,
 }: ProfileManagerProps) {
@@ -120,6 +122,31 @@ export default function ProfileManager({
                       />
                     </svg>
                   </button>
+                  {/* Duplicate — hidden when at limit */}
+                  {!atLimit && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDuplicate(p.id);
+                      }}
+                      title="Duplicate profile"
+                      className={`transition-opacity ${isActive ? "opacity-60 hover:opacity-100" : "opacity-0 group-hover:opacity-60 hover:opacity-100!"}`}
+                    >
+                      <svg
+                        className="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                        />
+                      </svg>
+                    </button>
+                  )}
                   {/* Delete ×  — only when >1 profile */}
                   {profiles.length > 1 && (
                     <button
