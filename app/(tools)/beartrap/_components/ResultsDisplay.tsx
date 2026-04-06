@@ -46,60 +46,6 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
         </div>
       </Card>
 
-      {/* Rally Damage Summary */}
-      <Card title="Rally Damage Summary">
-        <div className="space-y-4">
-          {config.playerType !== "joiner" && (
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                Own Rally Damage
-              </p>
-              <div className="flex justify-between items-baseline gap-4">
-                <p className="text-xs text-gray-500 dark:text-gray-500">
-                  {Math.floor(
-                    formation.ownRally.estimatedDamage,
-                  ).toLocaleString()}{" "}
-                  × {config.ownRallyCount}
-                </p>
-                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {formatNumber(Math.floor(formation.ownRallyDamage ?? 0))}
-                </p>
-              </div>
-            </div>
-          )}
-          <div>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-              Joined Rally Damage
-            </p>
-            <div className="flex justify-between items-baseline gap-4">
-              <p className="text-xs text-gray-500 dark:text-gray-500">
-                (Sum × ⅔) × {config.joinedRallyCount}
-              </p>
-              <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                {formatNumber(Math.floor(formation.joinedRallyDamage ?? 0))}
-              </p>
-            </div>
-          </div>
-          {config.playerType !== "joiner" && (
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-              <div className="flex justify-between items-center">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                  Total Event Damage
-                </p>
-                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                  {formatNumber(
-                    Math.floor(
-                      (formation.ownRallyDamage ?? 0) +
-                        (formation.joinedRallyDamage ?? 0),
-                    ),
-                  )}
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-      </Card>
-
       {/* Own Rally Formation */}
       {config.playerType !== "joiner" && (
         <Card title="Your Rally Formation">
@@ -489,28 +435,6 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
         </Card>
       )}
 
-      {/* Total Summary */}
-      <Card title="Total Formation Summary">
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600 dark:text-gray-400">
-              Total Damage
-            </span>
-            <span className="text-2xl font-bold text-gray-900 dark:text-white">
-              {formatNumber(Math.floor(formation.totalDamage))}
-            </span>
-          </div>
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-gray-600 dark:text-gray-400">Marches</span>
-            <span className="text-gray-900 dark:text-white font-medium">
-              {config.playerType === "joiner"
-                ? formation.joiners.length
-                : formation.joiners.length + 1}
-            </span>
-          </div>
-        </div>
-      </Card>
-
       {/* Debug Info: Formation Ratios */}
       {formation.debugInfo && (
         <>
@@ -534,6 +458,56 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
                   {formation.debugInfo.joinerRatio}
                 </p>
               </div>
+            </div>
+          </Card>
+
+          {/* Rally Damage Summary */}
+          <Card title="Rally Damage Summary">
+            <div className="space-y-4">
+              {config.playerType !== "joiner" && (
+                <div>
+                  <p className="text-sm text-gray-400 mb-2">Own Rally Damage</p>
+                  <div className="flex justify-between items-baseline gap-4">
+                    <p className="text-xs text-gray-500">
+                      {Math.floor(
+                        formation.ownRally.estimatedDamage,
+                      ).toLocaleString()}{" "}
+                      × {config.ownRallyCount}
+                    </p>
+                    <p className="text-2xl font-bold text-kingshot-infantry-light dark:text-kingshot-infantry-dark">
+                      {formatNumber(Math.floor(formation.ownRallyDamage ?? 0))}
+                    </p>
+                  </div>
+                </div>
+              )}
+              <div>
+                <p className="text-sm text-gray-400 mb-2">Joined Rally Damage</p>
+                <div className="flex justify-between items-baseline gap-4">
+                  <p className="text-xs text-gray-500">
+                    (Sum × ⅔) × {config.joinedRallyCount}
+                  </p>
+                  <p className="text-2xl font-bold text-kingshot-cavalry-light dark:text-kingshot-cavalry-dark">
+                    {formatNumber(Math.floor(formation.joinedRallyDamage ?? 0))}
+                  </p>
+                </div>
+              </div>
+              {config.playerType !== "joiner" && (
+                <div className="border-t border-kingshot-primary-900/20 dark:border-kingshot-primary-800/20 pt-4">
+                  <div className="flex justify-between items-center">
+                    <p className="text-sm font-semibold text-white">
+                      Total Event Damage
+                    </p>
+                    <p className="text-2xl font-bold text-kingshot-gold-400">
+                      {formatNumber(
+                        Math.floor(
+                          (formation.ownRallyDamage ?? 0) +
+                            (formation.joinedRallyDamage ?? 0),
+                        ),
+                      )}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
 
