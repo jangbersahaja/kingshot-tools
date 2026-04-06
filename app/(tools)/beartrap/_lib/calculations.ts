@@ -463,6 +463,103 @@ function allocateSingleTroopTotal(
 
   return tierBreakdown;
 } /**
+ * Compute optimal troop-type fractions for a march given attack factors.
+ *
+ * Maximises D = w_inf·A_inf·√(r_inf·N) + w_cav·A_cav·√(r_cav·N) + w_arc·A_arc·√(r_arc·N)
+ * subject to  r_inf + r_cav + r_arc = 1, r_i ≥ 0.
+ *
+ * Unconstrained optimum: r_i ∝ (w_i · A_i)²   (from Lagrange multipliers / dD/dr_i = 0)
+ * Weights: w_inf = 1/3,  w_cav = 1,  w_arc = (4/3)·1.1
+ *
+ * Each returned fraction is already capped by the fraction of available troops.
+ * Capacity is then assigned in order inf → arc → cav (filler) and rounded to 100.
+ */
+function optimalRatios(
+  availableInfantry: number,
+  availableCavalry: number,
+  availableArcher: number,
+  capacity: number,
+  infantryFactor: number,
+  cavalryFactor: number,
+  archerFactor: number,
+): { inf: number; cav: number; arc: number } {
+  const W_INF = 1 / 3;
+  const W_CAV = 1;
+  const W_ARC = (4 / 3) * 1.1;
+
+  // Weighted scores (w_i * A_i)^2 — higher means more troops of this type should be used
+  const scoreInf = Math.pow(W_INF * infantryFactor, 2);
+  const scoreCav = Math.pow(W_CAV * cavalryFactor, 2);
+  const scoreArc = Math.pow(W_ARC * archerFactor, 2);
+  const scoreTotal = scoreInf + scoreCav + scoreArc;
+
+  // Ideal fractions
+  let rInf = scoreInf / scoreTotal;
+  let rCav = scoreCav / scoreTotal;
+  let rArc = scoreArc / scoreTotal;
+
+  // Cap fractions by what is actually available (as a fraction of capacity)
+  const maxRInf = availableInfantry / capacity;
+  const maxRCav = availableCavalry / capacity;
+  const maxRArc = availableArcher / capacity;
+
+  // If a type is over-capped, redistribute surplus proportionally to the others
+  function redistribute(
+    fracs: [number, number, number],
+    caps: [number, number, number],
+  ): [number, number, number] {
+    let [a, b, c] = fracs;
+    const [ca, cb, cc] = caps;
+    let changed = true;
+    while (changed) {
+      changed = false;
+      if (a > ca) {
+        const surplus = a - ca;
+        a = ca;
+        const sbTotal = Math.max(b + c, 1e-9);
+        b += surplus * (b / sbTotal);
+        c += surplus * (c / sbTotal);
+        changed = true;
+      }
+      if (b > cb) {
+        const surplus = b - cb;
+        b = cb;
+        const saTotal = Math.max(a + c, 1e-9);
+        a += surplus * (a / saTotal);
+        c += surplus * (c / saTotal);
+        changed = true;
+      }
+      if (c > cc) {
+        const surplus = c - cc;
+        c = cc;
+        const saTotal = Math.max(a + b, 1e-9);
+        a += surplus * (a / saTotal);
+        b += surplus * (b / saTotal);
+        changed = true;
+      }
+    }
+    return [a, b, c];
+  }
+
+  [rInf, rCav, rArc] = redistribute(
+    [rInf, rCav, rArc],
+    [maxRInf, maxRCav, maxRArc],
+  );
+
+  // Convert to troop counts rounded to nearest 100
+  const inf = Math.floor((rInf * capacity) / 100) * 100;
+  const arc = Math.floor((rArc * capacity) / 100) * 100;
+  // Cavalry fills remaining capacity (capped by available)
+  const cav =
+    Math.min(
+      Math.floor((capacity - inf - arc) / 100) * 100,
+      Math.floor(availableCavalry / 100) * 100,
+    );
+
+  return { inf, cav, arc };
+}
+
+/**
  * Strong Player Strategy: Optimize own rally first
  */
 function calculateStrongPlayerFormation(
@@ -493,27 +590,37 @@ function calculateStrongPlayerFormation(
   let remainingCavalry = cavalry.reduce((sum, t) => sum + t.count, 0);
   let remainingInfantry = infantry.reduce((sum, t) => sum + t.count, 0);
 
-  // Own rally: 4:24:72 ratio + fill remaining with cavalry (all rounded to 100)
-  const ownRallyInfantry =
-    Math.floor(
-      Math.min(remainingInfantry, Math.floor(ownRallyCapacity * 0.04)) / 100,
-    ) * 100;
+  // ── Own rally: derive optimal ratio from battle stats ──────────────────────
+  const infFactor = calculateAttackFactor(stats.infantry, config.trapEnhancementLevel);
+  const cavFactor = calculateAttackFactor(stats.cavalry, config.trapEnhancementLevel);
+  const arcFactor = calculateAttackFactor(stats.archer, config.trapEnhancementLevel);
+
+  const ownRallyOptimal = optimalRatios(
+    remainingInfantry,
+    remainingCavalry,
+    remainingArcher,
+    ownRallyCapacity,
+    infFactor,
+    cavFactor,
+    arcFactor,
+  );
+
+  const ownRallyInfantry = Math.min(ownRallyOptimal.inf, remainingInfantry);
   remainingInfantry -= ownRallyInfantry;
 
-  const ownRallyArcher =
-    Math.floor(
-      Math.min(remainingArcher, Math.floor(ownRallyCapacity * 0.72)) / 100,
-    ) * 100;
+  const ownRallyArcher = Math.min(ownRallyOptimal.arc, remainingArcher);
   remainingArcher -= ownRallyArcher;
 
-  // Fill base cavalry slot (rounded to 100)
-  let ownRallyCavalry =
-    Math.floor(
-      Math.min(remainingCavalry, Math.floor(ownRallyCapacity * 0.24)) / 100,
-    ) * 100;
+  // Cavalry fills the remaining own-rally capacity
+  let ownRallyCavalry = Math.floor(
+    Math.min(
+      ownRallyCapacity - ownRallyInfantry - ownRallyArcher,
+      remainingCavalry,
+    ) / 100,
+  ) * 100;
   remainingCavalry -= ownRallyCavalry;
 
-  // Fill remaining capacity with cavalry (rounded to 100)
+  // Fill any leftover capacity in own rally with cavalry
   const remainingOwnRallyCapacity =
     ownRallyCapacity - ownRallyInfantry - ownRallyCavalry - ownRallyArcher;
   if (remainingOwnRallyCapacity > 0 && remainingCavalry > 0) {
@@ -950,35 +1057,25 @@ function calculateAveragePlayerFormation(
     });
   }
 
-  // Own rally: gets fair share of archers + leftover troops
-  const ownRallyArcher =
-    Math.floor(Math.min(archersOwnRally, remainingArcher) / 100) * 100;
-  let ownRallyInfantry =
-    Math.floor(Math.min(infantryOwnRally, remainingInfantry) / 100) * 100;
-  const ownRallyCavalry =
-    Math.floor(
-      Math.min(
-        ownRallyCapacity - ownRallyInfantry - ownRallyArcher,
-        remainingCavalry,
-      ) / 100,
-    ) * 100;
+  // Own rally: derive optimal ratio from battle stats (same formula as strong player)
+  const ownRallyOptimal = optimalRatios(
+    remainingInfantry,
+    remainingCavalry,
+    remainingArcher,
+    ownRallyCapacity,
+    calculateAttackFactor(stats.infantry, config.trapEnhancementLevel),
+    calculateAttackFactor(stats.cavalry, config.trapEnhancementLevel),
+    calculateAttackFactor(stats.archer, config.trapEnhancementLevel),
+  );
 
-  // If cavalry runs out, increase infantry
-  const ownRallySpaceAfterCavalry =
-    ownRallyCapacity - ownRallyInfantry - ownRallyCavalry - ownRallyArcher;
-  if (
-    ownRallySpaceAfterCavalry > 0 &&
-    remainingInfantry - ownRallyInfantry > 0
-  ) {
-    const extraInfantry =
-      Math.floor(
-        Math.min(
-          ownRallySpaceAfterCavalry,
-          remainingInfantry - ownRallyInfantry,
-        ) / 100,
-      ) * 100;
-    ownRallyInfantry += extraInfantry;
-  }
+  const ownRallyArcher = Math.min(ownRallyOptimal.arc, remainingArcher);
+  let ownRallyInfantry = Math.min(ownRallyOptimal.inf, remainingInfantry);
+  let ownRallyCavalry = Math.floor(
+    Math.min(
+      ownRallyCapacity - ownRallyInfantry - ownRallyArcher,
+      remainingCavalry,
+    ) / 100,
+  ) * 100;
 
   // Allocate troops by tier: joiners FIRST (higher tiers to earlier marches)
   const infantryRemaining = infantry.map((t) => ({ ...t }));
