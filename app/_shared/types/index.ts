@@ -77,11 +77,38 @@ export interface RallyFormation {
   totalDamage: number;
   ownRallyDamage?: number; // Own Rally Damage = per rally damage x own rally organized count
   joinedRallyDamage?: number; // Joined Rally Damage = (sum of all joiner march damage) x 2/3 x joined rally count
+  /** Warnings shown to the user when inventory is too small to fill all configured slots */
+  warnings?: string[];
   debugInfo?: {
     usedTroops: Record<string, number>; // troopId -> count used
     unusedTroops: Record<string, number>; // troopId -> count unused
     ownRallyRatio?: string; // e.g., "4:24:72 (inf:cav:arc)"
     joinerRatio?: string; // e.g., "10:25:65 (inf:cav:arc)"
+    /** Step-by-step breakdown of how the optimal ratio was derived */
+    ratioExplanation?: {
+      /** Weighted true_attack per type from inventory tier mix */
+      tierK: { infantry: number; cavalry: number; archer: number };
+      /** Archer extra multipliers: ranged-strike, T7+, TG3 */
+      archerMults: { rangedStrike: number; t7Plus: boolean; tg3T10: boolean };
+      /** Player's personal attack factor A = (1+atk%)×(1+leth%) */
+      attackFactor: { infantry: number; cavalry: number; archer: number };
+      /** Final k per type = tierK × mults × A */
+      finalK: { infantry: number; cavalry: number; archer: number };
+      /** k²-optimal ratio before supply/capacity constraints */
+      idealRatio: { infantry: number; cavalry: number; archer: number };
+      /** Actual ratio used in the formation after constraints */
+      usedRatio: { infantry: number; cavalry: number; archer: number };
+      /** Whether supply ran out for any type, forcing a suboptimal ratio */
+      supplyConstrained: {
+        infantry: boolean;
+        cavalry: boolean;
+        archer: boolean;
+      };
+      /** Whether march capacity forced a cap on any type */
+      capacityConstrained: boolean;
+      /** Grid search resolution in % (strong path only, null for average) */
+      gridStep: number | null;
+    };
   };
 }
 

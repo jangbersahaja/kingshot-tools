@@ -282,7 +282,7 @@ function RallyDamageSummaryCard({
   config,
 }: Pick<CalculationResult, "formation" | "config">) {
   return (
-    <Card title="Rally Damage Summary">
+    <Card title="Damage Illustration">
       <div className="space-y-2">
         {config.playerType !== "joiner" && (
           <div className="bg-blue-500/5 border border-blue-500/15 rounded-lg px-3 py-2.5">
@@ -326,12 +326,299 @@ function RallyDamageSummaryCard({
             </p>
           </div>
         )}
+
+        {/* Disclaimer */}
+        <div className="flex gap-2 items-start pt-1">
+          <span className="text-gray-600 text-[11px] shrink-0 mt-px">ℹ</span>
+          <p className="text-[10px] text-gray-600 leading-relaxed">
+            Damage figures are{" "}
+            <span className="text-gray-500">relative estimates</span> for
+            comparing formations — not absolute in-game values. Your actual
+            event score is driven primarily by{" "}
+            <span className="text-gray-500">
+              how many alliance members open and fill rallies
+            </span>
+            . Troop composition is a secondary factor.
+          </p>
+        </div>
       </div>
     </Card>
   );
 }
 
-// ─── main component ──────────────────────────────────────────────────────────
+function RatioBreakdownCard({
+  formation,
+  config,
+}: {
+  formation: CalculationResult["formation"];
+  config: CalculationResult["config"];
+}) {
+  const ex = formation.debugInfo?.ratioExplanation;
+  if (!ex) return null;
+  if (config.playerType === "joiner") return null;
+
+  const isStrong = config.playerType === "strong";
+  const isJoiner = config.playerType === "joiner";
+
+  const pct = (n: number) => `${Math.round(n)}%`;
+  const fmt2 = (n: number) => n.toFixed(2);
+
+  type TroopKey = "infantry" | "cavalry" | "archer";
+  const types: TroopKey[] = ["infantry", "cavalry", "archer"];
+
+  return (
+    <Card title="Ratio Breakdown">
+      <div className="space-y-4 text-xs text-gray-300">
+        {/* Formula */}
+        <div>
+          <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1.5">
+            Damage formula (per type)
+          </p>
+          <div className="bg-white/5 rounded-lg p-2.5 font-mono text-[11px] text-gray-300 leading-relaxed">
+            <p>D = (ta × mult × p × 1.2 / 1000)</p>
+            <p className="ml-7">× √(5000 × N) × A × 10</p>
+          </div>
+          <div className="mt-1.5 space-y-0.5 text-[10px] text-gray-500">
+            <p>
+              <span className="text-gray-400">ta</span> = true_attack (from tier
+              data)
+            </p>
+            <p>
+              <span className="text-gray-400">mult</span> = type multipliers
+              (archers ×1.1+)
+            </p>
+            <p>
+              <span className="text-gray-400">p</span> = tier proportion (tier
+              count ÷ total of that type)
+            </p>
+            <p>
+              <span className="text-gray-400">N</span> = total troop count of
+              that type
+            </p>
+            <p>
+              <span className="text-gray-400">A</span> = (1 + atk%) × (1 +
+              leth%)
+              {isStrong && " — your stats"}
+              {isJoiner && " — average joiner estimate"}
+            </p>
+          </div>
+        </div>
+
+        {/* Step 1 — tier k */}
+        <div>
+          <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1.5">
+            Step 1 — base k from your tier mix
+          </p>
+          <div className="grid grid-cols-3 gap-1.5">
+            {types.map((type) => {
+              const { icon, label, color } = TROOP_META[type];
+              const { text, bg, border } = COLOR[color];
+              return (
+                <div
+                  key={type}
+                  className={`${bg} border ${border} rounded-lg p-2 text-center`}
+                >
+                  <p className="text-[10px] text-gray-500 mb-0.5">
+                    {icon} {label}
+                  </p>
+                  <p className={`font-bold tabular-nums ${text}`}>
+                    {fmt2(ex.tierK[type])}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Step 2 — archer mults */}
+        <div>
+          <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1.5">
+            Step 2 — archer multipliers
+          </p>
+          <div className="bg-orange-500/5 border border-orange-500/15 rounded-lg p-2.5 space-y-1">
+            <div className="flex justify-between">
+              <span className="text-gray-400">Ranged strike</span>
+              <span className="text-orange-400 font-bold">×1.1 always</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400">T7+ bonus</span>
+              <span
+                className={
+                  ex.archerMults.t7Plus
+                    ? "text-orange-400 font-bold"
+                    : "text-gray-600"
+                }
+              >
+                {ex.archerMults.t7Plus ? "×1.1 ✓" : "—"}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400">TG3 T10 bonus</span>
+              <span
+                className={
+                  ex.archerMults.tg3T10
+                    ? "text-orange-400 font-bold"
+                    : "text-gray-600"
+                }
+              >
+                {ex.archerMults.tg3T10 ? "×1.1 ✓" : "—"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Step 3 — attack factor */}
+        <div>
+          <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1.5">
+            Step 3 — attack factor A = (1+atk%) × (1+leth%)
+          </p>
+          <div className="grid grid-cols-3 gap-1.5">
+            {types.map((type) => {
+              const { icon, label, color } = TROOP_META[type];
+              const { text, bg, border } = COLOR[color];
+              return (
+                <div
+                  key={type}
+                  className={`${bg} border ${border} rounded-lg p-2 text-center`}
+                >
+                  <p className="text-[10px] text-gray-500 mb-0.5">
+                    {icon} {label}
+                  </p>
+                  <p className={`font-bold tabular-nums ${text}`}>
+                    {fmt2(ex.attackFactor[type])}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Step 4 — final k → ideal ratio */}
+        <div>
+          <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1.5">
+            Step 4 — final k &amp; k²-ideal ratio
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-[11px]">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="text-left py-1 pr-2 text-gray-500 font-medium">
+                    Type
+                  </th>
+                  <th className="text-right py-1 px-2 text-gray-500 font-medium">
+                    final k
+                  </th>
+                  <th className="text-right py-1 px-2 text-gray-500 font-medium">
+                    k²-ideal
+                  </th>
+                  <th className="text-right py-1 pl-2 text-gray-500 font-medium">
+                    used
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {types.map((type) => {
+                  const { icon, color } = TROOP_META[type];
+                  const { text } = COLOR[color];
+                  const constrained = ex.supplyConstrained[type];
+                  const ideal = ex.idealRatio[type];
+                  const used = ex.usedRatio[type];
+                  const delta = used - ideal;
+                  return (
+                    <tr key={type} className="border-b border-white/5">
+                      <td
+                        className={`py-1.5 pr-2 font-semibold capitalize ${text}`}
+                      >
+                        {icon} {type}
+                      </td>
+                      <td className="text-right py-1.5 px-2 tabular-nums text-gray-300">
+                        {fmt2(ex.finalK[type])}
+                      </td>
+                      <td
+                        className={`text-right py-1.5 px-2 tabular-nums font-bold ${constrained ? "text-amber-400" : text}`}
+                      >
+                        {pct(ideal)}
+                        {constrained && " ⚠"}
+                      </td>
+                      <td className="text-right py-1.5 pl-2 tabular-nums">
+                        <span
+                          className={
+                            delta === 0
+                              ? text
+                              : delta > 0
+                                ? "text-green-400"
+                                : "text-amber-400"
+                          }
+                        >
+                          {pct(used)}
+                        </span>
+                        {delta !== 0 && (
+                          <span
+                            className={`ml-0.5 text-[10px] ${delta > 0 ? "text-green-500" : "text-amber-500"}`}
+                          >
+                            ({delta > 0 ? "+" : ""}
+                            {delta})
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {isStrong && (
+            <p className="text-[10px] text-gray-600 mt-1.5">
+              Grid search at 1% steps — used ratio is the nearest grid point to
+              k²-ideal.
+            </p>
+          )}
+        </div>
+
+        {/* Constraint notices */}
+        {(ex.supplyConstrained.infantry ||
+          ex.supplyConstrained.cavalry ||
+          ex.supplyConstrained.archer ||
+          ex.capacityConstrained) && (
+          <div className="space-y-1.5">
+            <p className="text-[10px] text-gray-500 uppercase tracking-wide">
+              Constraints
+            </p>
+            {types
+              .filter((t) => ex.supplyConstrained[t])
+              .map((type) => {
+                const { icon, label } = TROOP_META[type];
+                return (
+                  <div
+                    key={type}
+                    className="flex items-start gap-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg px-2.5 py-2"
+                  >
+                    <span className="text-amber-400 mt-px">⚠</span>
+                    <p className="text-amber-300/80 leading-snug">
+                      <span className="font-semibold">
+                        {icon} {label} supply limited
+                      </span>{" "}
+                      — not enough {label.toLowerCase()} to reach the k²-ideal
+                      ratio. Freed capacity cascades to the next type.
+                    </p>
+                  </div>
+                );
+              })}
+            {ex.capacityConstrained && (
+              <div className="flex items-start gap-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg px-2.5 py-2">
+                <span className="text-blue-400 mt-px">ℹ</span>
+                <p className="text-blue-300/80 leading-snug">
+                  March capacity is not fully used — rounding to nearest 100
+                  leaves a small gap.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
 
 export default function ResultsDisplay({ result }: ResultsDisplayProps) {
   const { formation, config } = result;
@@ -430,6 +717,84 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
     <div className="flex flex-col lg:flex-row gap-6 items-start">
       {/* ── Main column (2/3) ── */}
       <div className="w-full lg:flex-2 space-y-6 min-w-0">
+        {/* Rally activity warning banner (blue — actionable insight) */}
+        {formation.warnings &&
+          formation.warnings.some((w) =>
+            w.startsWith("Low alliance activity"),
+          ) && (
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 flex gap-3 items-start">
+              <svg
+                className="w-5 h-5 text-blue-400 shrink-0 mt-0.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <div>
+                <p className="text-sm font-semibold text-blue-400 mb-1.5">
+                  Alliance Activity — Biggest Lever
+                </p>
+                <ul className="space-y-1">
+                  {formation.warnings
+                    .filter((w) => w.startsWith("Low alliance activity"))
+                    .map((w, i) => (
+                      <li
+                        key={i}
+                        className="text-xs text-blue-300/80 leading-relaxed"
+                      >
+                        {w}
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+        {/* Inventory warning banner (amber — formation was adjusted) */}
+        {formation.warnings &&
+          formation.warnings.some(
+            (w) => !w.startsWith("Low alliance activity"),
+          ) && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex gap-3 items-start">
+              <svg
+                className="w-5 h-5 text-amber-400 shrink-0 mt-0.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-2.194-.833-2.964 0L4.27 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
+              </svg>
+              <div>
+                <p className="text-sm font-semibold text-amber-400 mb-1.5">
+                  Formation Adjusted — Insufficient Troops
+                </p>
+                <ul className="space-y-1">
+                  {formation.warnings
+                    .filter((w) => !w.startsWith("Low alliance activity"))
+                    .map((w, i) => (
+                      <li
+                        key={i}
+                        className="text-xs text-amber-300/80 leading-relaxed"
+                      >
+                        {w}
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
         {/* Configuration Summary */}
         <Card title="Configuration">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
@@ -497,9 +862,10 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
       </div>
 
       {/* ── Sidebar (1/3) ── */}
-      <div className="w-full lg:flex-1 space-y-4 lg:sticky lg:top-20 min-w-0">
-        <FormationRatiosCard formation={formation} />
+      <div className="w-full lg:flex-1 space-y-4 min-w-0">
         <RallyDamageSummaryCard formation={formation} config={config} />
+        <FormationRatiosCard formation={formation} />
+        <RatioBreakdownCard formation={formation} config={config} />
       </div>
     </div>
   );

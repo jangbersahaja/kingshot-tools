@@ -367,6 +367,59 @@ export default function BearTrapPage() {
                   );
                 })}
               </div>
+
+              {/* Contextual disclaimer */}
+              {config.playerType === "strong" && (
+                <div className="mt-2 rounded-lg border border-kingshot-gold-500/20 bg-kingshot-gold-500/5 px-3 py-2 space-y-1">
+                  <p className="text-[11px] font-semibold text-kingshot-gold-400">
+                    🏆 Strong — You lead the rally
+                  </p>
+                  <p className="text-[10px] text-gray-500 leading-relaxed">
+                    Best if you consistently{" "}
+                    <span className="text-gray-400">
+                      open and fill your own rallies
+                    </span>
+                    . Your own march is optimised first with your highest-tier
+                    troops; remaining troops are distributed to joiner marches.
+                    Choose this when your march capacity is large (e.g. 125k+)
+                    and your alliance reliably fills your rallies.
+                  </p>
+                </div>
+              )}
+              {config.playerType === "average" && (
+                <div className="mt-2 rounded-lg border border-blue-500/20 bg-blue-500/5 px-3 py-2 space-y-1">
+                  <p className="text-[11px] font-semibold text-blue-400">
+                    ⚖️ Average — Lead & join
+                  </p>
+                  <p className="text-[10px] text-gray-500 leading-relaxed">
+                    Best for <span className="text-gray-400">most players</span>{" "}
+                    — you open rallies but also join others. Troops are spread
+                    evenly across all marches (own rally + joiners) using a
+                    globally optimal ratio. Joiner marches are treated as
+                    equally important as your own rally.
+                  </p>
+                </div>
+              )}
+              {config.playerType === "joiner" && (
+                <div className="mt-2 rounded-lg border border-orange-500/20 bg-orange-500/5 px-3 py-2 space-y-1">
+                  <p className="text-[11px] font-semibold text-orange-400">
+                    🔗 Joiner — Join only, no own rally
+                  </p>
+                  <p className="text-[10px] text-gray-500 leading-relaxed">
+                    All march slots are optimised purely for{" "}
+                    <span className="text-gray-400">
+                      joining other players' rallies
+                    </span>
+                    . No own rally is calculated.
+                  </p>
+                  <p className="text-[10px] text-orange-400/70 leading-relaxed border-t border-orange-500/15 pt-1.5 mt-1">
+                    ⚠️ <span className="font-medium">Alliance policy:</span>{" "}
+                    Many alliances require members to open rallies, not just
+                    join. Check with your R4/R5 before using joiner-only mode —
+                    it may violate participation rules.
+                  </p>
+                </div>
+              )}
             </div>
 
             <button
