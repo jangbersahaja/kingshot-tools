@@ -358,7 +358,7 @@ function RatioBreakdownCard({
   if (config.playerType === "joiner") return null;
 
   const isStrong = config.playerType === "strong";
-  const isJoiner = config.playerType === "joiner";
+  const isJoiner = false; // always false — joiner early-returns above
 
   const pct = (n: number) => `${Math.round(n)}%`;
   const fmt2 = (n: number) => n.toFixed(2);
