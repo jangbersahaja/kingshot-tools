@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react"; // useCallback kept for setValue
 
 /**
  * Drop-in replacement for useState that persists the value in localStorage.
@@ -10,22 +10,24 @@ export function useLocalStorage<T>(
   key: string,
   initialValue: T,
 ): [T, (value: T | ((prev: T) => T)) => void] {
-  // Read from localStorage lazily (only on the client)
-  const readStored = useCallback((): T => {
-    if (typeof window === "undefined") return initialValue;
+  // Always start with initialValue so server and first client render match.
+  // localStorage is hydrated in a useEffect (client-only) to avoid mismatch.
+  const [storedValue, setStoredValue] = useState<T>(initialValue);
+
+  // Hydrate from localStorage after mount (client only)
+  useEffect(() => {
     try {
       const raw = window.localStorage.getItem(key);
-      return raw ? (JSON.parse(raw) as T) : initialValue;
+      if (raw !== null) {
+        setStoredValue(JSON.parse(raw) as T);
+      }
     } catch {
-      return initialValue;
+      // Corrupted data — keep initialValue
     }
-  }, [key, initialValue]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const [storedValue, setStoredValue] = useState<T>(readStored);
-
-  // Sync to localStorage whenever the value changes
+  // Sync to localStorage whenever the value changes (skip first render = initialValue)
   useEffect(() => {
-    if (typeof window === "undefined") return;
     try {
       window.localStorage.setItem(key, JSON.stringify(storedValue));
     } catch {
