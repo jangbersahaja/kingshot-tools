@@ -10,6 +10,7 @@ import type {
 } from "@/app/_shared/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import BattleStatsInput from "./_components/BattleStatsInput";
+import CustomRatioSliders from "./_components/CustomRatioSliders";
 import ProfileManager, { MAX_PROFILES } from "./_components/ProfileManager";
 import RallySettings from "./_components/RallySettings";
 import ResultsDisplay from "./_components/ResultsDisplay";
@@ -34,6 +35,10 @@ const DEFAULT_CONFIG: BearTrapConfig = {
   playerType: "average",
   ownRallyCount: 5,
   joinedRallyCount: 50,
+  customRatio: {
+    ownRally: { infantry: 5, cavalry: 30, archer: 65 },
+    joiner: { infantry: 5, cavalry: 30, archer: 65 },
+  },
 };
 
 function makeProfile(
@@ -336,7 +341,7 @@ export default function BearTrapPage() {
                 Player Type
               </label>
               {/* Segmented picker */}
-              <div className="grid grid-cols-3 gap-1.5">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                 {(
                   [
                     {
@@ -346,6 +351,7 @@ export default function BearTrapPage() {
                     },
                     { value: "average", label: "Average", sub: "Balanced" },
                     { value: "joiner", label: "Joiner", sub: "Join only" },
+                    { value: "custom", label: "Custom", sub: "Set own ratio" },
                   ] as const
                 ).map(({ value, label, sub }) => {
                   const active = config.playerType === value;
@@ -357,7 +363,9 @@ export default function BearTrapPage() {
                       }
                       className={`rounded-lg border px-2 py-2 text-center transition-all ${
                         active
-                          ? "border-kingshot-gold-500 bg-kingshot-gold-500/10 text-kingshot-gold-400"
+                          ? value === "custom"
+                            ? "border-purple-500 bg-purple-500/10 text-purple-400"
+                            : "border-kingshot-gold-500 bg-kingshot-gold-500/10 text-kingshot-gold-400"
                           : "border-white/10 bg-white/5 text-gray-400 hover:border-white/20 hover:text-gray-300"
                       }`}
                     >
@@ -420,6 +428,64 @@ export default function BearTrapPage() {
                   </p>
                 </div>
               )}
+              {config.playerType === "custom" && (
+                <div className="mt-2 rounded-lg border border-purple-500/20 bg-purple-500/5 px-3 py-2 space-y-1">
+                  <p className="text-[11px] font-semibold text-purple-400">
+                    🎛️ Custom — Set your own troop ratio
+                  </p>
+                  <p className="text-[10px] text-gray-500 leading-relaxed">
+                    Define the exact{" "}
+                    <span className="text-gray-400">
+                      infantry / cavalry / archer mix
+                    </span>{" "}
+                    for your own rally and joiner marches. The calculator fills
+                    as close to your target as your supply allows, then cascades
+                    any leftover capacity to available types.
+                  </p>
+                  <CustomRatioSliders
+                    ownRally={
+                      config.customRatio?.ownRally ?? {
+                        infantry: 5,
+                        cavalry: 30,
+                        archer: 65,
+                      }
+                    }
+                    joiner={
+                      config.customRatio?.joiner ?? {
+                        infantry: 5,
+                        cavalry: 30,
+                        archer: 65,
+                      }
+                    }
+                    onOwnRallyChange={(v) =>
+                      setConfig({
+                        ...config,
+                        customRatio: {
+                          ownRally: v,
+                          joiner: config.customRatio?.joiner ?? {
+                            infantry: 5,
+                            cavalry: 30,
+                            archer: 65,
+                          },
+                        },
+                      })
+                    }
+                    onJoinerChange={(v) =>
+                      setConfig({
+                        ...config,
+                        customRatio: {
+                          ownRally: config.customRatio?.ownRally ?? {
+                            infantry: 5,
+                            cavalry: 30,
+                            archer: 65,
+                          },
+                          joiner: v,
+                        },
+                      })
+                    }
+                  />
+                </div>
+              )}
             </div>
 
             <button
@@ -461,7 +527,11 @@ export default function BearTrapPage() {
         {/* Results - full width below inputs */}
         <div>
           {result ? (
-            <ResultsDisplay result={result} />
+            <ResultsDisplay
+              result={result}
+              onConfigChange={setConfig}
+              onRecalculate={handleCalculate}
+            />
           ) : (
             <Card>
               <div className="flex flex-col items-center justify-center h-48 space-y-3">

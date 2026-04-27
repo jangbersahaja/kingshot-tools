@@ -1,10 +1,18 @@
 "use client";
 
 import { Card } from "@/app/_shared/components/Card";
-import type { CalculationResult, MarchFormation } from "@/app/_shared/types";
+import type {
+  BearTrapConfig,
+  CalculationResult,
+  MarchFormation,
+  TroopRatio,
+} from "@/app/_shared/types";
+import { useState } from "react";
 
 interface ResultsDisplayProps {
   result: CalculationResult;
+  onConfigChange?: (config: BearTrapConfig) => void;
+  onRecalculate?: () => void;
 }
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -243,34 +251,262 @@ function MarchCard({
 
 // ─── sidebar sub-components ─────────────────────────────────────────────────
 
+/** Parse "4% inf : 24% cav : 72% arc" → { infantry:4, cavalry:24, archer:72 } */
+function parseRatioString(s: string): TroopRatio | null {
+  const m = s.match(/(\d+)%\s*inf\s*:\s*(\d+)%\s*cav\s*:\s*(\d+)%\s*arc/);
+  if (!m) return null;
+  return {
+    infantry: parseInt(m[1]),
+    cavalry: parseInt(m[2]),
+    archer: parseInt(m[3]),
+  };
+}
+
+const RATIO_TYPES = [
+  { key: "infantry" as const, label: "Inf", color: "#3b82f6" },
+  { key: "cavalry" as const, label: "Cav", color: "#22c55e" },
+  { key: "archer" as const, label: "Arc", color: "#f59e0b" },
+];
+
+function RatioSliderInline({
+  value,
+  onChange,
+}: {
+  value: TroopRatio;
+  onChange: (v: TroopRatio) => void;
+}) {
+  const handleChange = (type: keyof TroopRatio, raw: number) => {
+    const newVal = Math.max(0, Math.min(100, raw));
+    const others = (["infantry", "cavalry", "archer"] as const).filter(
+      (t) => t !== type,
+    );
+    const otherSum = value[others[0]] + value[others[1]];
+    const remaining = 100 - newVal;
+    const a0 =
+      otherSum === 0
+        ? Math.floor(remaining / 2)
+        : Math.round((remaining * value[others[0]]) / otherSum);
+    const a1 = remaining - a0;
+    onChange({
+      ...value,
+      [type]: newVal,
+      [others[0]]: Math.max(0, a0),
+      [others[1]]: Math.max(0, a1),
+    });
+  };
+
+  const sum = value.infantry + value.cavalry + value.archer;
+  return (
+    <div className="space-y-2 mt-2">
+      {RATIO_TYPES.map(({ key, label, color }) => (
+        <div key={key} className="flex items-center gap-2">
+          <span
+            className="text-[10px] font-medium w-6 shrink-0"
+            style={{ color }}
+          >
+            {label}
+          </span>
+          <div className="relative flex-1 h-5 flex items-center">
+            <div className="absolute w-full h-1 rounded-full bg-white/10" />
+            <div
+              className="absolute h-1 rounded-full pointer-events-none"
+              style={{
+                width: `${value[key]}%`,
+                background: color,
+                opacity: 0.7,
+              }}
+            />
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={value[key]}
+              onChange={(e) => handleChange(key, parseInt(e.target.value))}
+              className="absolute inset-0 w-full opacity-0 cursor-pointer"
+              style={{ zIndex: 1 }}
+            />
+            <div
+              className="absolute w-2.5 h-2.5 rounded-full border border-white/60 pointer-events-none"
+              style={{ left: `calc(${value[key]}% - 5px)`, background: color }}
+            />
+          </div>
+          <span className="text-[10px] font-mono text-gray-300 w-8 text-right tabular-nums shrink-0">
+            {value[key]}%
+          </span>
+        </div>
+      ))}
+      {sum !== 100 && (
+        <p className="text-[10px] text-red-400">Sum = {sum}% (must be 100%)</p>
+      )}
+    </div>
+  );
+}
+
+function RatioRow({
+  label,
+  ratioStr,
+  config,
+  ratioKey,
+  onConfigChange,
+  onRecalculate,
+}: {
+  label: string;
+  ratioStr: string;
+  config: CalculationResult["config"];
+  ratioKey: "ownRally" | "joiner";
+  onConfigChange?: (c: BearTrapConfig) => void;
+  onRecalculate?: () => void;
+}) {
+  const isCustom = config.playerType === "custom";
+  const canEdit = !!onConfigChange && !!onRecalculate;
+
+  // Local editable copy — initialised from config (custom) or parsed string
+  const currentRatio: TroopRatio =
+    isCustom && config.customRatio
+      ? config.customRatio[ratioKey]
+      : (parseRatioString(ratioStr) ?? {
+          infantry: 5,
+          cavalry: 30,
+          archer: 65,
+        });
+
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<TroopRatio>(currentRatio);
+
+  const open = () => {
+    setDraft(currentRatio);
+    setEditing(true);
+  };
+  const cancel = () => setEditing(false);
+  const apply = () => {
+    if (!onConfigChange || !onRecalculate) return;
+    const sum = draft.infantry + draft.cavalry + draft.archer;
+    if (sum !== 100) return;
+    const newCustomRatio = {
+      ownRally:
+        ratioKey === "ownRally"
+          ? draft
+          : (config.customRatio?.ownRally ?? currentRatio),
+      joiner:
+        ratioKey === "joiner"
+          ? draft
+          : (config.customRatio?.joiner ?? currentRatio),
+    };
+    onConfigChange({
+      ...config,
+      playerType: "custom",
+      customRatio: newCustomRatio,
+    });
+    setEditing(false);
+    // Small defer so the config update is committed first
+    setTimeout(onRecalculate, 0);
+  };
+
+  return (
+    <div className="bg-white/5 rounded-lg p-3">
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-[10px] text-gray-500 uppercase tracking-wide">
+          {label}
+        </p>
+        {canEdit && !editing && (
+          <button
+            onClick={open}
+            title="Edit ratio"
+            className="text-[10px] text-gray-500 hover:text-kingshot-gold-400 flex items-center gap-0.5 transition-colors"
+          >
+            <svg
+              className="w-3 h-3"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+              />
+            </svg>
+            Edit
+          </button>
+        )}
+      </div>
+
+      {editing ? (
+        <>
+          <RatioSliderInline value={draft} onChange={setDraft} />
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={apply}
+              disabled={draft.infantry + draft.cavalry + draft.archer !== 100}
+              className="flex-1 rounded-md bg-kingshot-gold-500/20 border border-kingshot-gold-500/40 px-2 py-1 text-[11px] font-semibold text-kingshot-gold-400 hover:bg-kingshot-gold-500/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Apply & Recalculate
+            </button>
+            <button
+              onClick={cancel}
+              className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-gray-400 hover:text-gray-200 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+          {config.playerType !== "custom" && (
+            <p className="text-[10px] text-purple-400/70 mt-2">
+              Applying will switch to Custom mode.
+            </p>
+          )}
+        </>
+      ) : (
+        <p
+          className={`text-sm font-semibold text-white font-mono ${
+            canEdit
+              ? "cursor-pointer hover:text-kingshot-gold-400 transition-colors"
+              : ""
+          }`}
+          onClick={canEdit ? open : undefined}
+          title={canEdit ? "Click to edit ratio" : undefined}
+        >
+          {ratioStr}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function FormationRatiosCard({
   formation,
+  config,
+  onConfigChange,
+  onRecalculate,
 }: {
   formation: CalculationResult["formation"];
+  config: CalculationResult["config"];
+  onConfigChange?: (c: BearTrapConfig) => void;
+  onRecalculate?: () => void;
 }) {
   if (!formation.debugInfo) return null;
   return (
     <Card title="Formation Ratios">
       <div className="space-y-2">
         {formation.debugInfo.ownRallyRatio && (
-          <div className="bg-white/5 rounded-lg p-3">
-            <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">
-              Own Rally
-            </p>
-            <p className="text-sm font-semibold text-white font-mono">
-              {formation.debugInfo.ownRallyRatio}
-            </p>
-          </div>
+          <RatioRow
+            label="Own Rally"
+            ratioStr={formation.debugInfo.ownRallyRatio}
+            config={config}
+            ratioKey="ownRally"
+            onConfigChange={onConfigChange}
+            onRecalculate={onRecalculate}
+          />
         )}
         {formation.debugInfo.joinerRatio && (
-          <div className="bg-white/5 rounded-lg p-3">
-            <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">
-              Joiner Marches
-            </p>
-            <p className="text-sm font-semibold text-white font-mono">
-              {formation.debugInfo.joinerRatio}
-            </p>
-          </div>
+          <RatioRow
+            label="Joiner Marches"
+            ratioStr={formation.debugInfo.joinerRatio}
+            config={config}
+            ratioKey="joiner"
+            onConfigChange={onConfigChange}
+            onRecalculate={onRecalculate}
+          />
         )}
       </div>
     </Card>
@@ -620,7 +856,11 @@ function RatioBreakdownCard({
   );
 }
 
-export default function ResultsDisplay({ result }: ResultsDisplayProps) {
+export default function ResultsDisplay({
+  result,
+  onConfigChange,
+  onRecalculate,
+}: ResultsDisplayProps) {
   const { formation, config } = result;
 
   const allocationSection = formation.debugInfo && (
@@ -864,7 +1104,12 @@ export default function ResultsDisplay({ result }: ResultsDisplayProps) {
       {/* ── Sidebar (1/3) ── */}
       <div className="w-full lg:flex-1 space-y-4 min-w-0">
         <RallyDamageSummaryCard formation={formation} config={config} />
-        <FormationRatiosCard formation={formation} />
+        <FormationRatiosCard
+          formation={formation}
+          config={config}
+          onConfigChange={onConfigChange}
+          onRecalculate={onRecalculate}
+        />
         <RatioBreakdownCard formation={formation} config={config} />
       </div>
     </div>

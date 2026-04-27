@@ -2530,6 +2530,430 @@ function calculatePureJoinerFormation(
 }
 
 /**
+ * Custom Player Strategy: honours user-specified own-rally and joiner ratios.
+ *
+ * Allocation logic per slot:
+ *   1. Apply user's % targets to march capacity → ideal counts per type
+ *   2. Cap each type to available supply
+ *   3. Cascade leftover capacity (arc → cav → inf) so no slots are wasted
+ *   4. Warn when any type is supply-constrained or overall fill < 35%
+ */
+function calculateCustomFormation(
+  config: BearTrapConfig,
+  stats: BearTrapSecondaryStats,
+): RallyFormation {
+  const trueGoldLevels = config.inventory.trueGold;
+  const ratio = config.customRatio ?? {
+    ownRally: { infantry: 5, cavalry: 30, archer: 65 },
+    joiner: { infantry: 5, cavalry: 30, archer: 65 },
+  };
+
+  const archers = getBestTroopsForType(
+    config.inventory.items,
+    "archer",
+    trueGoldLevels.archer,
+  );
+  const cavalry = getBestTroopsForType(
+    config.inventory.items,
+    "cavalry",
+    trueGoldLevels.cavalry,
+  );
+  const infantry = getBestTroopsForType(
+    config.inventory.items,
+    "infantry",
+    trueGoldLevels.infantry,
+  );
+
+  let remainingArcher = archers.reduce((sum, t) => sum + t.count, 0);
+  let remainingCavalry = cavalry.reduce((sum, t) => sum + t.count, 0);
+  let remainingInfantry = infantry.reduce((sum, t) => sum + t.count, 0);
+
+  const warnings: string[] = [];
+
+  // ── Attack factors ─────────────────────────────────────────────────────
+  const infFactor = calculateAttackFactor(
+    stats.infantry,
+    config.trapEnhancementLevel,
+  );
+  const cavFactor = calculateAttackFactor(
+    stats.cavalry,
+    config.trapEnhancementLevel,
+  );
+  const arcFactor = calculateAttackFactor(
+    stats.archer,
+    config.trapEnhancementLevel,
+  );
+
+  // ── Own Rally ──────────────────────────────────────────────────────────
+  const ownCap = config.marchCapacity;
+  const ownArcTarget =
+    Math.floor((ownCap * (ratio.ownRally.archer / 100)) / 10) * 10;
+  const ownCavTarget =
+    Math.floor((ownCap * (ratio.ownRally.cavalry / 100)) / 10) * 10;
+  const ownInfTarget =
+    Math.floor((ownCap * (ratio.ownRally.infantry / 100)) / 10) * 10;
+
+  let ownArc = Math.min(ownArcTarget, Math.floor(remainingArcher / 10) * 10);
+  let ownCav = Math.min(ownCavTarget, Math.floor(remainingCavalry / 10) * 10);
+  let ownInf = Math.min(ownInfTarget, Math.floor(remainingInfantry / 10) * 10);
+
+  const ownArcConstrained = ownArc < ownArcTarget;
+  const ownCavConstrained = ownCav < ownCavTarget;
+  const ownInfConstrained = ownInf < ownInfTarget;
+
+  // Cascade spare capacity (arc → cav → inf)
+  let ownSpare = ownCap - ownArc - ownCav - ownInf;
+  if (ownSpare > 0 && remainingArcher > ownArc) {
+    const extra =
+      Math.floor(Math.min(ownSpare, remainingArcher - ownArc) / 10) * 10;
+    ownArc += extra;
+    ownSpare -= extra;
+  }
+  if (ownSpare > 0 && remainingCavalry > ownCav) {
+    const extra =
+      Math.floor(Math.min(ownSpare, remainingCavalry - ownCav) / 10) * 10;
+    ownCav += extra;
+    ownSpare -= extra;
+  }
+  if (ownSpare > 0 && remainingInfantry > ownInf) {
+    const extra =
+      Math.floor(Math.min(ownSpare, remainingInfantry - ownInf) / 10) * 10;
+    ownInf += extra;
+  }
+
+  if (ownArcConstrained || ownCavConstrained || ownInfConstrained) {
+    const constrained = [
+      ownArcConstrained && "archers",
+      ownCavConstrained && "cavalry",
+      ownInfConstrained && "infantry",
+    ]
+      .filter(Boolean)
+      .join(", ");
+    warnings.push(
+      `Own rally: requested ratio could not be fully honoured — ${constrained} were supply-limited. Remaining capacity cascaded to available troop types.`,
+    );
+  }
+
+  remainingArcher -= ownArc;
+  remainingCavalry -= ownCav;
+  remainingInfantry -= ownInf;
+
+  // ── Joiner Marches ─────────────────────────────────────────────────────
+  // Tier allocation: joiners get best tiers first (consistent with Average strategy).
+  // Own rally gets whatever is left in the tier pools afterwards.
+  const joiners: MarchFormation[] = [];
+  const joinerCap = config.joinerLimit;
+  const marchCount = config.marchCount;
+
+  const jArcTargetTotal =
+    Math.floor((joinerCap * (ratio.joiner.archer / 100)) / 10) *
+    10 *
+    marchCount;
+  const jCavTargetTotal =
+    Math.floor((joinerCap * (ratio.joiner.cavalry / 100)) / 10) *
+    10 *
+    marchCount;
+  const jInfTargetTotal =
+    Math.floor((joinerCap * (ratio.joiner.infantry / 100)) / 10) *
+    10 *
+    marchCount;
+
+  let poolArc = Math.min(
+    jArcTargetTotal,
+    Math.floor(remainingArcher / 10) * 10,
+  );
+  let poolCav = Math.min(
+    jCavTargetTotal,
+    Math.floor(remainingCavalry / 10) * 10,
+  );
+  let poolInf = Math.min(
+    jInfTargetTotal,
+    Math.floor(remainingInfantry / 10) * 10,
+  );
+
+  const joinerArcConstrained = poolArc < jArcTargetTotal;
+  const joinerCavConstrained = poolCav < jCavTargetTotal;
+  const joinerInfConstrained = poolInf < jInfTargetTotal;
+
+  // Cascade spare joiner capacity (arc → cav → inf)
+  const totalJoinerCap = joinerCap * marchCount;
+  let joinerSpare = totalJoinerCap - poolArc - poolCav - poolInf;
+  if (joinerSpare > 0 && remainingArcher > poolArc) {
+    const extra =
+      Math.floor(Math.min(joinerSpare, remainingArcher - poolArc) / 10) * 10;
+    poolArc += extra;
+    joinerSpare -= extra;
+  }
+  if (joinerSpare > 0 && remainingCavalry > poolCav) {
+    const extra =
+      Math.floor(Math.min(joinerSpare, remainingCavalry - poolCav) / 10) * 10;
+    poolCav += extra;
+    joinerSpare -= extra;
+  }
+  if (joinerSpare > 0 && remainingInfantry > poolInf) {
+    const extra =
+      Math.floor(Math.min(joinerSpare, remainingInfantry - poolInf) / 10) * 10;
+    poolInf += extra;
+  }
+
+  if (joinerArcConstrained || joinerCavConstrained || joinerInfConstrained) {
+    const constrained = [
+      joinerArcConstrained && "archers",
+      joinerCavConstrained && "cavalry",
+      joinerInfConstrained && "infantry",
+    ]
+      .filter(Boolean)
+      .join(", ");
+    warnings.push(
+      `Joiner marches: requested ratio could not be fully honoured — ${constrained} were supply-limited. Remaining capacity cascaded to available troop types.`,
+    );
+  }
+
+  const totalAllocated = poolArc + poolCav + poolInf;
+  if (
+    marchCount > 0 &&
+    totalJoinerCap > 0 &&
+    totalAllocated / totalJoinerCap < 0.35
+  ) {
+    warnings.push(
+      `Insufficient troops to meaningfully fill joiner marches (${Math.round((totalAllocated / totalJoinerCap) * 100)}% fill). Consider reducing March Count in Rally Settings.`,
+    );
+  }
+
+  // Distribute pool evenly across marches; last march absorbs rounding remainder
+  const arcPerMarch = Math.floor(poolArc / marchCount / 10) * 10;
+  const cavPerMarch = Math.floor(poolCav / marchCount / 10) * 10;
+  const infPerMarch = Math.floor(poolInf / marchCount / 10) * 10;
+  const arcBonus = poolArc - arcPerMarch * marchCount;
+  const cavBonus = poolCav - cavPerMarch * marchCount;
+  const infBonus = poolInf - infPerMarch * marchCount;
+
+  const marchAllocations: { inf: number; cav: number; arch: number }[] = [];
+  for (let i = 0; i < marchCount; i++) {
+    const isLast = i === marchCount - 1;
+    marchAllocations.push({
+      arch: arcPerMarch + (isLast ? arcBonus : 0),
+      cav: cavPerMarch + (isLast ? cavBonus : 0),
+      inf: infPerMarch + (isLast ? infBonus : 0),
+    });
+  }
+
+  // Joiner tier pools — full copies; joiners get best tiers first
+  const infantryTierPool = infantry.map((t) => ({ ...t }));
+  const cavalryTierPool = cavalry.map((t) => ({ ...t }));
+  const archerTierPool = archers.map((t) => ({ ...t }));
+
+  const infantryByTier = allocateTroopsByTier(
+    infantryTierPool,
+    marchAllocations.map((m) => m.inf),
+  );
+  const cavalryByTier = allocateTroopsByTier(
+    cavalryTierPool,
+    marchAllocations.map((m) => m.cav),
+  );
+  const archerByTier = allocateTroopsByTier(
+    archerTierPool,
+    marchAllocations.map((m) => m.arch),
+  );
+
+  // Subtract joiner tier usage so own rally gets whatever remains
+  for (const byTier of infantryByTier) {
+    Object.entries(byTier).forEach(([tier, count]) => {
+      const tg = infantryTierPool.find((t) => t.tier === parseInt(tier));
+      if (tg) tg.count -= count;
+    });
+  }
+  for (const byTier of cavalryByTier) {
+    Object.entries(byTier).forEach(([tier, count]) => {
+      const tg = cavalryTierPool.find((t) => t.tier === parseInt(tier));
+      if (tg) tg.count -= count;
+    });
+  }
+  for (const byTier of archerByTier) {
+    Object.entries(byTier).forEach(([tier, count]) => {
+      const tg = archerTierPool.find((t) => t.tier === parseInt(tier));
+      if (tg) tg.count -= count;
+    });
+  }
+
+  // Joiner attack factors — no trap enhancement (consistent with Strong/Average)
+  const jInfF = calculateEffectiveAttackFactor(
+    config.inventory.items,
+    "infantry",
+    DEFAULT_JOINER_STATS.infantry,
+  );
+  const jCavF = calculateEffectiveAttackFactor(
+    config.inventory.items,
+    "cavalry",
+    DEFAULT_JOINER_STATS.cavalry,
+  );
+  const jArcF = calculateEffectiveAttackFactor(
+    config.inventory.items,
+    "archer",
+    DEFAULT_JOINER_STATS.archer,
+  );
+
+  for (let i = 0; i < marchCount; i++) {
+    const finalInf = marchAllocations[i].inf;
+    const finalCav = marchAllocations[i].cav;
+    const finalArc = marchAllocations[i].arch;
+
+    const marchDmg = calculateRallyDamage(
+      finalInf,
+      finalCav,
+      finalArc,
+      jInfF,
+      jCavF,
+      jArcF,
+      infantryByTier[i],
+      cavalryByTier[i],
+      archerByTier[i],
+      config.inventory.items,
+      trueGoldLevels.infantry,
+      trueGoldLevels.cavalry,
+      trueGoldLevels.archer,
+    );
+    const marchDmgByType = calculateRallyDamageByType(
+      finalInf,
+      finalCav,
+      finalArc,
+      jInfF,
+      jCavF,
+      jArcF,
+      infantryByTier[i],
+      cavalryByTier[i],
+      archerByTier[i],
+      config.inventory.items,
+      trueGoldLevels.infantry,
+      trueGoldLevels.cavalry,
+      trueGoldLevels.archer,
+    );
+
+    joiners.push({
+      marchIndex: i + 1,
+      infantry: finalInf,
+      cavalry: finalCav,
+      archer: finalArc,
+      totalTroops: finalInf + finalCav + finalArc,
+      estimatedDamage: marchDmg,
+      damageByType: marchDmgByType,
+      infantryTiers: infantryByTier[i],
+      cavalryTiers: cavalryByTier[i],
+      archerTiers: archerByTier[i],
+    });
+  }
+
+  // ── Own rally tier allocation — from what remains after joiners ─────────
+  const ownRallyInfByTier = allocateSingleTroopTotal(infantryTierPool, ownInf);
+  const ownRallyCavByTier = allocateSingleTroopTotal(cavalryTierPool, ownCav);
+  const ownRallyArcByTier = allocateSingleTroopTotal(archerTierPool, ownArc);
+
+  const ownRallyDamage = calculateRallyDamage(
+    ownInf,
+    ownCav,
+    ownArc,
+    infFactor,
+    cavFactor,
+    arcFactor,
+    ownRallyInfByTier,
+    ownRallyCavByTier,
+    ownRallyArcByTier,
+    config.inventory.items,
+    trueGoldLevels.infantry,
+    trueGoldLevels.cavalry,
+    trueGoldLevels.archer,
+  );
+  const ownRallyDamageByType = calculateRallyDamageByType(
+    ownInf,
+    ownCav,
+    ownArc,
+    infFactor,
+    cavFactor,
+    arcFactor,
+    ownRallyInfByTier,
+    ownRallyCavByTier,
+    ownRallyArcByTier,
+    config.inventory.items,
+    trueGoldLevels.infantry,
+    trueGoldLevels.cavalry,
+    trueGoldLevels.archer,
+  );
+
+  // ── Aggregation ────────────────────────────────────────────────────────
+  const totalJoinerDmg = joiners.reduce((sum, m) => sum + m.estimatedDamage, 0);
+  const totalDmg = ownRallyDamage + totalJoinerDmg;
+  const calculatedOwnRallyDamage = ownRallyDamage * config.ownRallyCount;
+  const calculatedJoinedRallyDamage =
+    marchCount > 0
+      ? (totalJoinerDmg / marchCount) * (2 / 3) * config.joinedRallyCount
+      : 0;
+
+  const allInfTiers: Record<number, number> = { ...ownRallyInfByTier };
+  const allCavTiers: Record<number, number> = { ...ownRallyCavByTier };
+  const allArcTiers: Record<number, number> = { ...ownRallyArcByTier };
+  joiners.forEach((march) => {
+    Object.entries(march.infantryTiers ?? {}).forEach(([t, c]) => {
+      allInfTiers[+t] = (allInfTiers[+t] || 0) + c;
+    });
+    Object.entries(march.cavalryTiers ?? {}).forEach(([t, c]) => {
+      allCavTiers[+t] = (allCavTiers[+t] || 0) + c;
+    });
+    Object.entries(march.archerTiers ?? {}).forEach(([t, c]) => {
+      allArcTiers[+t] = (allArcTiers[+t] || 0) + c;
+    });
+  });
+
+  const { usedTroops, unusedTroops } = buildTroopsDebugInfo(
+    config.inventory.items,
+    allInfTiers,
+    allCavTiers,
+    allArcTiers,
+  );
+
+  const ownTotal = ownInf + ownCav + ownArc;
+  const ownRallyRatioStr =
+    ownTotal > 0
+      ? `${Math.round((ownInf / ownTotal) * 100)}% inf : ${Math.round((ownCav / ownTotal) * 100)}% cav : ${Math.round((ownArc / ownTotal) * 100)}% arc`
+      : "N/A";
+
+  const totalJoinerInf = joiners.reduce((s, m) => s + m.infantry, 0);
+  const totalJoinerCav = joiners.reduce((s, m) => s + m.cavalry, 0);
+  const totalJoinerArc = joiners.reduce((s, m) => s + m.archer, 0);
+  const totalJoinerTroops = totalJoinerInf + totalJoinerCav + totalJoinerArc;
+  const joinerRatioStr =
+    totalJoinerTroops > 0
+      ? `${Math.round((totalJoinerInf / totalJoinerTroops) * 100)}% inf : ${Math.round((totalJoinerCav / totalJoinerTroops) * 100)}% cav : ${Math.round((totalJoinerArc / totalJoinerTroops) * 100)}% arc`
+      : "N/A";
+
+  return {
+    ownRally: {
+      marchIndex: 0,
+      infantry: ownInf,
+      cavalry: ownCav,
+      archer: ownArc,
+      totalTroops: ownTotal,
+      estimatedDamage: ownRallyDamage,
+      damageByType: ownRallyDamageByType,
+      infantryTiers: ownRallyInfByTier,
+      cavalryTiers: ownRallyCavByTier,
+      archerTiers: ownRallyArcByTier,
+    },
+    joiners,
+    totalDamage: totalDmg,
+    ownRallyDamage: calculatedOwnRallyDamage,
+    joinedRallyDamage: calculatedJoinedRallyDamage,
+    warnings: warnings.length > 0 ? warnings : undefined,
+    debugInfo: {
+      usedTroops,
+      unusedTroops,
+      ownRallyRatio: ownRallyRatioStr,
+      joinerRatio: joinerRatioStr,
+      // No ratioExplanation for custom mode — breakdown panel is hidden
+    },
+  };
+}
+
+/**
  * Main calculation function - routes to appropriate strategy
  */
 export function calculateBearTrapFormation(
@@ -2546,6 +2970,9 @@ export function calculateBearTrapFormation(
       break;
     case "joiner":
       formation = calculatePureJoinerFormation(config, secondaryStats);
+      break;
+    case "custom":
+      formation = calculateCustomFormation(config, secondaryStats);
       break;
     default:
       formation = calculateAveragePlayerFormation(config, secondaryStats);

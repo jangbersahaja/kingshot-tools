@@ -112,6 +112,13 @@ export interface RallyFormation {
   };
 }
 
+/** Troop ratio as percentages (infantry + cavalry + archer should sum to 100) */
+export interface TroopRatio {
+  infantry: number;
+  cavalry: number;
+  archer: number;
+}
+
 // Bear Trap Event Configuration
 export interface BearTrapConfig {
   inventory: TroopInventory;
@@ -119,9 +126,14 @@ export interface BearTrapConfig {
   joinerLimit: number;
   marchCount: number;
   trapEnhancementLevel: number;
-  playerType: "strong" | "average" | "joiner";
+  playerType: "strong" | "average" | "joiner" | "custom";
   ownRallyCount: number;
   joinedRallyCount: number;
+  /** Custom ratio targets — only used when playerType === "custom" */
+  customRatio?: {
+    ownRally: TroopRatio;
+    joiner: TroopRatio;
+  };
 }
 
 export interface BattleStatsInput {
