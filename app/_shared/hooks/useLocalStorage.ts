@@ -5,14 +5,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 /**
  * Drop-in replacement for useState that persists the value in localStorage.
  * Safe for SSR — falls back to the initialValue during server render.
+ * Returns [value, setValue, isHydrated] where isHydrated becomes true once
+ * the stored value has been read from localStorage.
  */
 export function useLocalStorage<T>(
   key: string,
   initialValue: T,
-): [T, (value: T | ((prev: T) => T)) => void] {
-  // Always start with initialValue so server and first client render match.
+): [T, (value: T | ((prev: T) => T)) => void, boolean] {
   const [storedValue, setStoredValue] = useState<T>(initialValue);
-  // Track whether we've finished reading from localStorage yet.
+  const [isHydrated, setIsHydrated] = useState(false);
   const hydrated = useRef(false);
 
   // Hydrate from localStorage after mount (client only)
@@ -26,6 +27,7 @@ export function useLocalStorage<T>(
       // Corrupted data — keep initialValue
     }
     hydrated.current = true;
+    setIsHydrated(true);
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sync to localStorage whenever the value changes — but only after hydration,
@@ -47,5 +49,5 @@ export function useLocalStorage<T>(
     });
   }, []);
 
-  return [storedValue, setValue];
+  return [storedValue, setValue, isHydrated];
 }

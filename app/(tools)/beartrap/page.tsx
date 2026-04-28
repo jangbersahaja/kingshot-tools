@@ -57,19 +57,17 @@ function makeProfile(
 
 export default function BearTrapPage() {
   // ── Profiles ────────────────────────────────────────────────────────────
-  const [profiles, setProfiles] = useLocalStorage<BearTrapProfile[]>(
-    "beartrap:profiles",
-    [],
-  );
-  const [activeProfileId, setActiveProfileId] = useLocalStorage<string | null>(
-    "beartrap:activeProfileId",
-    null,
-  );
+  const [profiles, setProfiles, profilesHydrated] = useLocalStorage<
+    BearTrapProfile[]
+  >("beartrap:profiles", []);
+  const [activeProfileId, setActiveProfileId, idHydrated] = useLocalStorage<
+    string | null
+  >("beartrap:activeProfileId", null);
 
   // ── Draft (auto-persisted so unsaved changes survive a page refresh) ────
   // Stores the in-progress edits together with the profile they belong to.
   // Cleared on Save or when switching away to another profile.
-  const [draft, setDraft] = useLocalStorage<{
+  const [draft, setDraft, draftHydrated] = useLocalStorage<{
     profileId: string;
     config: BearTrapConfig;
     secondaryStats: BearTrapSecondaryStats;
@@ -119,7 +117,9 @@ export default function BearTrapPage() {
 
   // ── Hydrate from active profile (or draft) on mount ─────────────────────
   const hydratedRef = useRef(false);
+  const allHydrated = profilesHydrated && idHydrated && draftHydrated;
   useEffect(() => {
+    if (!allHydrated) return;
     if (hydratedRef.current) return;
     hydratedRef.current = true;
 
@@ -151,7 +151,7 @@ export default function BearTrapPage() {
       setSecondaryStatsRaw(active.secondaryStats);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [allHydrated]);
 
   // ── Profile actions ──────────────────────────────────────────────────────
   const handleSave = useCallback(() => {
