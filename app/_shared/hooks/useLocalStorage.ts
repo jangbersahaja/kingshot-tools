@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react"; // useCallback kept for setValue
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * Drop-in replacement for useState that persists the value in localStorage.
@@ -11,8 +11,9 @@ export function useLocalStorage<T>(
   initialValue: T,
 ): [T, (value: T | ((prev: T) => T)) => void] {
   // Always start with initialValue so server and first client render match.
-  // localStorage is hydrated in a useEffect (client-only) to avoid mismatch.
   const [storedValue, setStoredValue] = useState<T>(initialValue);
+  // Track whether we've finished reading from localStorage yet.
+  const hydrated = useRef(false);
 
   // Hydrate from localStorage after mount (client only)
   useEffect(() => {
@@ -24,10 +25,13 @@ export function useLocalStorage<T>(
     } catch {
       // Corrupted data — keep initialValue
     }
+    hydrated.current = true;
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Sync to localStorage whenever the value changes (skip first render = initialValue)
+  // Sync to localStorage whenever the value changes — but only after hydration,
+  // so we never overwrite stored data with the initialValue on first mount.
   useEffect(() => {
+    if (!hydrated.current) return;
     try {
       window.localStorage.setItem(key, JSON.stringify(storedValue));
     } catch {
