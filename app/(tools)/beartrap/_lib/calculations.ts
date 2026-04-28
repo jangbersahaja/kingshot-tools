@@ -1845,69 +1845,158 @@ function calculateAveragePlayerFormation(
   // ── Global solve: own rally + all joiner marches treated as equal slots ───
   // Target ratio 4% inf : 35% cav : 61% arc (true k²-optimal for T10 troops).
   // Own rally is just one more slot — same ratio target, no special treatment.
-  // This ensures every march including own rally gets a decent formation and
-  // none is left with only leftover troops.
-  // Total capacity = all joiner marches + own rally (treated as one more slot)
-  const totalCapacity = avgMarchCount * joinerMarchCapacity + avgOwnCap;
+  // ── Determine own rally troop counts ─────────────────────────────────────
+  // If the player has enough troops to fully fill all joiner marches, their
+  // own rally can be optimised independently using the grid search (same as
+  // Strong strategy) so the trap-enhancement bonus is properly accounted for.
+  // Otherwise fall back to the global proportional split so every march
+  // (including own rally) gets a fair share of the available troops.
+  const joinerTotalCapacity = avgMarchCount * joinerMarchCapacity;
+  const totalTroops = remainingArcher + remainingCavalry + remainingInfantry;
+  const hasAbundantTroops = totalTroops > joinerTotalCapacity;
 
-  const globalSplit = computeOptimalSplit(
-    totalCapacity,
-    remainingArcher,
-    remainingCavalry,
-    remainingInfantry,
-    archers,
-    cavalry,
-    infantry,
-    trueGoldLevels.archer,
-    trueGoldLevels.cavalry,
-    trueGoldLevels.infantry,
-  );
+  let ownRallyArcher: number;
+  let ownRallyCavalry: number;
+  let ownRallyInfantry: number;
 
-  // Distribute own rally share proportionally by capacity
-  const ownCapFraction = avgOwnCap / totalCapacity;
-  let ownRallyArcher =
-    Math.floor((globalSplit.arch * ownCapFraction) / 10) * 10;
-  let ownRallyCavalry =
-    Math.floor((globalSplit.cav * ownCapFraction) / 10) * 10;
-  let ownRallyInfantry =
-    Math.floor((globalSplit.inf * ownCapFraction) / 10) * 10;
+  if (hasAbundantTroops) {
+    // ── Abundant path: optimise own rally independently ──────────────────
+    // Compute joiner needs (from the full pool) to know what's left for own rally.
+    const joinerSplit = computeOptimalSplit(
+      joinerTotalCapacity,
+      remainingArcher,
+      remainingCavalry,
+      remainingInfantry,
+      archers,
+      cavalry,
+      infantry,
+      trueGoldLevels.archer,
+      trueGoldLevels.cavalry,
+      trueGoldLevels.infantry,
+    );
+    // Troops that remain after giving joiners what they need
+    const leftArcher = Math.max(0, remainingArcher - joinerSplit.arch);
+    const leftCavalry = Math.max(0, remainingCavalry - joinerSplit.cav);
+    const leftInfantry = Math.max(0, remainingInfantry - joinerSplit.inf);
 
-  // Cap to own rally capacity and available troops
-  const ownTotal = ownRallyArcher + ownRallyCavalry + ownRallyInfantry;
-  if (ownTotal > avgOwnCap) {
-    // Scale down proportionally if over cap (rare due to floor rounding)
-    const scale = avgOwnCap / ownTotal;
-    ownRallyArcher = Math.floor((ownRallyArcher * scale) / 10) * 10;
-    ownRallyCavalry = Math.floor((ownRallyCavalry * scale) / 10) * 10;
-    ownRallyInfantry = Math.floor((ownRallyInfantry * scale) / 10) * 10;
-  }
-  ownRallyArcher = Math.min(ownRallyArcher, remainingArcher);
-  ownRallyCavalry = Math.min(ownRallyCavalry, remainingCavalry);
-  ownRallyInfantry = Math.min(ownRallyInfantry, remainingInfantry);
+    // Own rally attack factors include trap-enhancement (same as Strong path)
+    const infFactor = calculateAttackFactor(
+      stats.infantry,
+      config.trapEnhancementLevel,
+    );
+    const cavFactor = calculateAttackFactor(
+      stats.cavalry,
+      config.trapEnhancementLevel,
+    );
+    const arcFactor = calculateAttackFactor(
+      stats.archer,
+      config.trapEnhancementLevel,
+    );
 
-  // Fill any spare own-rally capacity (arc → cav → inf)
-  let ownSpare =
-    avgOwnCap - ownRallyArcher - ownRallyCavalry - ownRallyInfantry;
-  if (ownSpare > 0 && remainingArcher > ownRallyArcher) {
-    const e =
-      Math.floor(Math.min(ownSpare, remainingArcher - ownRallyArcher) / 100) *
-      100;
-    ownRallyArcher += e;
-    ownSpare -= e;
-  }
-  if (ownSpare > 0 && remainingCavalry > ownRallyCavalry) {
-    const e =
-      Math.floor(Math.min(ownSpare, remainingCavalry - ownRallyCavalry) / 100) *
-      100;
-    ownRallyCavalry += e;
-    ownSpare -= e;
-  }
-  if (ownSpare > 0 && remainingInfantry > ownRallyInfantry) {
-    const e =
-      Math.floor(
-        Math.min(ownSpare, remainingInfantry - ownRallyInfantry) / 100,
-      ) * 100;
-    ownRallyInfantry += e;
+    // Snapshot tier pools for the grid scorer (read-only)
+    const infantryTierPoolSnap = infantry.map((t) => ({ ...t }));
+    const cavalryTierPoolSnap = cavalry.map((t) => ({ ...t }));
+    const archerTierPoolSnap = archers.map((t) => ({ ...t }));
+
+    const ownRallyOptimal = findOptimalOwnRallyFormation(
+      leftInfantry,
+      leftCavalry,
+      leftArcher,
+      avgOwnCap,
+      infantryTierPoolSnap,
+      cavalryTierPoolSnap,
+      archerTierPoolSnap,
+      infFactor,
+      cavFactor,
+      arcFactor,
+      trueGoldLevels.infantry,
+      trueGoldLevels.cavalry,
+      trueGoldLevels.archer,
+    );
+
+    ownRallyArcher = Math.min(ownRallyOptimal.arc, leftArcher);
+    ownRallyCavalry = Math.min(ownRallyOptimal.cav, leftCavalry);
+    ownRallyInfantry = Math.min(ownRallyOptimal.inf, leftInfantry);
+
+    // Fill any remaining own-rally capacity (arc → cav → inf)
+    let ownSpare =
+      avgOwnCap - ownRallyArcher - ownRallyCavalry - ownRallyInfantry;
+    for (const type of ["arc", "cav", "inf"] as const) {
+      if (ownSpare <= 0) break;
+      if (type === "arc" && leftArcher > ownRallyArcher) {
+        const e =
+          Math.floor(Math.min(ownSpare, leftArcher - ownRallyArcher) / 10) * 10;
+        ownRallyArcher += e;
+        ownSpare -= e;
+      } else if (type === "cav" && leftCavalry > ownRallyCavalry) {
+        const e =
+          Math.floor(Math.min(ownSpare, leftCavalry - ownRallyCavalry) / 10) *
+          10;
+        ownRallyCavalry += e;
+        ownSpare -= e;
+      } else if (type === "inf" && leftInfantry > ownRallyInfantry) {
+        const e =
+          Math.floor(Math.min(ownSpare, leftInfantry - ownRallyInfantry) / 10) *
+          10;
+        ownRallyInfantry += e;
+        ownSpare -= e;
+      }
+    }
+  } else {
+    // ── Scarce path: global proportional split (original behaviour) ───────
+    const totalCapacity = joinerTotalCapacity + avgOwnCap;
+    const globalSplit = computeOptimalSplit(
+      totalCapacity,
+      remainingArcher,
+      remainingCavalry,
+      remainingInfantry,
+      archers,
+      cavalry,
+      infantry,
+      trueGoldLevels.archer,
+      trueGoldLevels.cavalry,
+      trueGoldLevels.infantry,
+    );
+    const ownCapFraction = avgOwnCap / totalCapacity;
+    ownRallyArcher = Math.floor((globalSplit.arch * ownCapFraction) / 10) * 10;
+    ownRallyCavalry = Math.floor((globalSplit.cav * ownCapFraction) / 10) * 10;
+    ownRallyInfantry = Math.floor((globalSplit.inf * ownCapFraction) / 10) * 10;
+
+    const ownTotal = ownRallyArcher + ownRallyCavalry + ownRallyInfantry;
+    if (ownTotal > avgOwnCap) {
+      const scale = avgOwnCap / ownTotal;
+      ownRallyArcher = Math.floor((ownRallyArcher * scale) / 10) * 10;
+      ownRallyCavalry = Math.floor((ownRallyCavalry * scale) / 10) * 10;
+      ownRallyInfantry = Math.floor((ownRallyInfantry * scale) / 10) * 10;
+    }
+    ownRallyArcher = Math.min(ownRallyArcher, remainingArcher);
+    ownRallyCavalry = Math.min(ownRallyCavalry, remainingCavalry);
+    ownRallyInfantry = Math.min(ownRallyInfantry, remainingInfantry);
+
+    let ownSpare =
+      avgOwnCap - ownRallyArcher - ownRallyCavalry - ownRallyInfantry;
+    if (ownSpare > 0 && remainingArcher > ownRallyArcher) {
+      const e =
+        Math.floor(Math.min(ownSpare, remainingArcher - ownRallyArcher) / 100) *
+        100;
+      ownRallyArcher += e;
+      ownSpare -= e;
+    }
+    if (ownSpare > 0 && remainingCavalry > ownRallyCavalry) {
+      const e =
+        Math.floor(
+          Math.min(ownSpare, remainingCavalry - ownRallyCavalry) / 100,
+        ) * 100;
+      ownRallyCavalry += e;
+      ownSpare -= e;
+    }
+    if (ownSpare > 0 && remainingInfantry > ownRallyInfantry) {
+      const e =
+        Math.floor(
+          Math.min(ownSpare, remainingInfantry - ownRallyInfantry) / 100,
+        ) * 100;
+      ownRallyInfantry += e;
+    }
   }
 
   // ── Joiner marches: count allocation (quantity only, not tiers yet) ────────
